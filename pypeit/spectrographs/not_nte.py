@@ -245,7 +245,25 @@ class NOTNTEVISSpectrograph(NOTNTESpectrograph):
         turn_off = dict(use_overscan=False)
         par.reset_all_processimages_par(**turn_off)
 
+        # The below is sufficient for OK edge tracing, probably not a necessary set
+        par['calibrations']['slitedges']['edge_thresh'] = 5.0
+        par['calibrations']['slitedges']['fit_order'] = 5
+        par['calibrations']['slitedges']['max_shift_adj'] = 0.5
+        par['calibrations']['slitedges']['trace_thresh'] = 10
+        par['calibrations']['slitedges']['length_range'] = 0.3
+        par['calibrations']['slitedges']['fit_min_spec_length'] = 0.3
+        par['calibrations']['slitedges']['det_buffer'] = 0
+        par['calibrations']['slitedges']['max_nudge'] = 0
+        #par['calibrations']['slitedges']['left_right_pca'] = True
+        #par['calibrations']['slitedges']['add_slits'] = "1:2280:35:124"
+        #par['calibrations']['slitedges']['sync_predict'] = "nearest"
+        #par['calibrations']['slitedges']['smash_range'] = [0.3,0.7]
+
+
+
         # commenting out everything, lets tune this once we begin to run the code
+
+
 
 ##        # X-SHOOTER arcs/tilts are also have different binning with bias
 ##        # frames, so don't use bias frames. Don't use the biases for any
