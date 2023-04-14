@@ -252,14 +252,16 @@ class NOTNTEVISSpectrograph(NOTNTESpectrograph):
         par['calibrations']['slitedges']['trace_thresh'] = 10
         par['calibrations']['slitedges']['length_range'] = 0.3
         par['calibrations']['slitedges']['fit_min_spec_length'] = 0.3
-        par['calibrations']['slitedges']['det_buffer'] = 0
-        par['calibrations']['slitedges']['max_nudge'] = 0
+        par['calibrations']['slitedges']['det_buffer'] = 1
+        par['calibrations']['slitedges']['max_nudge'] = 1
         #par['calibrations']['slitedges']['left_right_pca'] = True
         #par['calibrations']['slitedges']['add_slits'] = "1:2280:35:124"
         #par['calibrations']['slitedges']['sync_predict'] = "nearest"
-        #par['calibrations']['slitedges']['smash_range'] = [0.3,0.7]
+        par['calibrations']['slitedges']['smash_range'] = [0.3,0.7]
 
 
+        # Start on wl calib
+        par['calibrations']['wavelengths']['lamps'] = ['HgI,ArI']
 
         # commenting out everything, lets tune this once we begin to run the code
 
