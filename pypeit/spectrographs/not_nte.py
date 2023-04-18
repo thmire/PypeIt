@@ -34,7 +34,7 @@ class NOTNTESpectrograph(spectrograph.Spectrograph):
     name = 'not_nte'
     telescope = telescopes.NOTTelescopePar() # already have NOTTelescopePar from ALFOSC dev
     pypeline = 'Echelle'
-    url = 'https://nte.nbi.ku.dk/' # add webpage when that exists
+    url = 'https://nte.nbi.ku.dk/'
     ech_fixed_format = True
     header_name = 'NTE'
 
@@ -49,7 +49,6 @@ class NOTNTESpectrograph(spectrograph.Spectrograph):
         # Required (core)
         # Have used the options from not_alfosc, should be consistent
         # Dithering stuff from keck_nires
-
         self.meta['ra'] = dict(ext=0, card="RA")
         self.meta['dec'] = dict(ext=0, card='DEC')
         self.meta['target'] = dict(ext=0, card='OBJECT')
