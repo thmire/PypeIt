@@ -1,10 +1,20 @@
 from pypeit.core.wavecal import templates
 import glob
 
-wavelength_soln_files = glob.glob("./*.fits")
+wavelength_soln_files = glob.glob("./wvcalib*.fits")
 
-templates.build_template("./wvarxiv_not_nte_vis_order8_20230418T1401.fits",
-                         slits,
+wavelength_soln_files = [
+    "wvcalib_order8.fits","wvcalib_order9.fits"
+    "wvcalib_order10.fits","wvcalib_order11.fits"
+    "wvcalib_order12.fits","wvcalib_order13.fits"
+    "wvcalib_order14.fits","wvcalib_order15.fits"
+
+                         ]
+
+print(wavelength_soln_files)
+
+templates.build_template(wavelength_soln_files,
+                         [],
                          wv_cuts,
                          binspec,
                          outroot,
