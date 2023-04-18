@@ -250,18 +250,20 @@ class NOTNTEVISSpectrograph(NOTNTESpectrograph):
         par['calibrations']['slitedges']['fit_order'] = 5
         par['calibrations']['slitedges']['max_shift_adj'] = 0.5
         par['calibrations']['slitedges']['trace_thresh'] = 10
-        par['calibrations']['slitedges']['length_range'] = 0.3
         par['calibrations']['slitedges']['fit_min_spec_length'] = 0.3
+        #par['calibrations']['slitedges']['fit_function'] = "polynomial"
+
         par['calibrations']['slitedges']['det_buffer'] = 1
         par['calibrations']['slitedges']['max_nudge'] = 1
         #par['calibrations']['slitedges']['left_right_pca'] = True
         #par['calibrations']['slitedges']['add_slits'] = "1:2280:35:124"
         #par['calibrations']['slitedges']['sync_predict'] = "nearest"
-        par['calibrations']['slitedges']['smash_range'] = [0.3,0.7]
+        #par['calibrations']['slitedges']['smash_range'] = [0.3,0.7]
 
 
         # Start on wl calib
         par['calibrations']['wavelengths']['lamps'] = ['HgI,ArI']
+        par['calibrations']['wavelengths']['reference'] = 'arc'
 
         # commenting out everything, lets tune this once we begin to run the code
 
@@ -342,14 +344,16 @@ class NOTNTEVISSpectrograph(NOTNTESpectrograph):
         """
         Number of orders observed for this spectograph.
         """
-        return 8
+        return 8 # SHOULD BE 8, THIS IS A HACK
 
     @property
     def order_spat_pos(self):
         """
         Return the expected spatial position of each echelle order.
         """
-        return np.array([0.07128906, 0.20214844, 0.32421875, 0.43847656,\
+        return np.array([
+            0.07128906, 0.20214844, 
+            0.32421875, 0.43847656,
                       0.54492188, 0.64453125, 0.73925781, 0.83398438])
 
 
@@ -369,8 +373,8 @@ class NOTNTEVISSpectrograph(NOTNTESpectrograph):
         Return the minimum and maximum spectral pixel expected for the
         spectral range of each order.
         """
-        spec_max = np.asarray([0]*8)
-        spec_min = np.asarray([0,30,0,50,80,100,320,1700])
+        spec_min = np.asarray([0]*8)
+        spec_max = np.asarray([2000,3000,4000,4000,4000,4000,4000,4000])
         return np.vstack((spec_min, spec_max))
 
 
@@ -395,9 +399,7 @@ class NOTNTEVISSpectrograph(NOTNTESpectrograph):
         binspectral, binspatial = parse.parse_binning(binning)
 
         # ToDO Work this out
-        # X-shooter manual says, but gives no exact numbers per order.
-        # VIS: 65.9 pixels (0.167"/pix) at order 17 to 72.0 pixels (0.153"/pix) at order 30.
-
+        
         # Right now I just assume constant
         plate_scale = 0.23
         return plate_scale*binspatial
