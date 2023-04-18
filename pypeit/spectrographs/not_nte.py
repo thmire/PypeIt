@@ -34,8 +34,8 @@ class NOTNTESpectrograph(spectrograph.Spectrograph):
     name = 'not_nte'
     telescope = telescopes.NOTTelescopePar() # already have NOTTelescopePar from ALFOSC dev
     pypeline = 'Echelle'
-    url = '' # add webpage when that exists
-    ech_fixed_format = True # Need to check what this does
+    url = 'https://nte.nbi.ku.dk/' # add webpage when that exists
+    ech_fixed_format = True
     header_name = 'NTE'
 
     def init_meta(self):
@@ -49,7 +49,7 @@ class NOTNTESpectrograph(spectrograph.Spectrograph):
         # Required (core)
         # Have used the options from not_alfosc, should be consistent
         # Dithering stuff from keck_nires
-        
+
         self.meta['ra'] = dict(ext=0, card="RA")
         self.meta['dec'] = dict(ext=0, card='DEC')
         self.meta['target'] = dict(ext=0, card='OBJECT')
@@ -64,12 +64,12 @@ class NOTNTESpectrograph(spectrograph.Spectrograph):
         self.meta['idname'] = dict(ext=0, card='IMAGETYP')
         self.meta['arm'] = dict(ext=0, card="ARM")
         self.meta['instrument'] = dict(ext=0, card='INSTRUME')
-        
+
         # Dithering
 ##        self.meta['dithpat'] = dict(ext=0, card='DPATNAME')
 ##        self.meta['dithpos'] = dict(card=None, compound=True)
 ##        self.meta['dithoff'] = dict(ext=0, card='YOFFSET')
-       
+
 
     def compound_meta(self, headarr, meta_key):
         """
@@ -156,7 +156,7 @@ class NOTNTESpectrograph(spectrograph.Spectrograph):
         # Also using the header decisions made in Lise's python script
         # etalon? NIR? missing Sky
         # Might need to include telluric and/or sky in the science classified ftype
-        
+
         if ftype == 'science':
             return good_exp & (fitstbl['idname'] == 'OBJECT') #| (fitstbl['target'] == 'STD,TELLURIC')  | (fitstbl['target'] == 'STD,SKY'))
         if ftype == 'standard':
@@ -173,7 +173,7 @@ class NOTNTESpectrograph(spectrograph.Spectrograph):
             return good_exp & (fitstbl['idname'] == 'LAMP,TRACE')
         if ftype == "sky":
             return good_exp & (fitstbl['idname'] == 'SKY')
-        
+
         msgs.warn('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
 
@@ -224,20 +224,20 @@ class NOTNTEVISSpectrograph(NOTNTESpectrograph):
             datasec=np.atleast_1d('[11:1024,:]'),  # Just trying something here
             oscansec=np.atleast_1d('[0:11,:]'),  # Just trying something here
         )
-        
+
         return detector_container.DetectorContainer(**detector_dict)
 
     @classmethod
     def default_pypeit_par(cls):
         """
         Return the default parameters to use for this instrument.
-        
+
         Returns:
             :class:`~pypeit.par.pypeitpar.PypeItPar`: Parameters required by
             all of ``PypeIt`` methods.
         """
         par = super().default_pypeit_par()
-        
+
         # Adjustments to parameters for VIS
         #turn_on = dict(use_biasimage=True, use_overscan=False, overscan_method='median',
         #               use_darkimage=False, use_illumflat=False, use_pixelflat=False,
@@ -294,7 +294,7 @@ class NOTNTEVISSpectrograph(NOTNTESpectrograph):
 ##        # These are the defaults
 ##        par['calibrations']['tilts']['tracethresh'] = 15
 ##        par['calibrations']['tilts']['spat_order'] =  3
-##        par['calibrations']['tilts']['spec_order'] =  5 
+##        par['calibrations']['tilts']['spec_order'] =  5
 ##
 ##        # 1D wavelength solution
 ##        par['calibrations']['wavelengths']['lamps'] = ['ThAr_XSHOOTER_VIS']
@@ -516,7 +516,7 @@ class NOTNTEVISSpectrograph(NOTNTESpectrograph):
 ##    def default_pypeit_par(cls):
 ##        """
 ##        Return the default parameters to use for this instrument.
-##        
+##
 ##        Returns:
 ##            :class:`~pypeit.par.pypeitpar.PypeItPar`: Parameters required by
 ##            all of ``PypeIt`` methods.
@@ -625,7 +625,7 @@ class NOTNTEVISSpectrograph(NOTNTESpectrograph):
 ##
 ##        # Required
 ##        self.meta['decker'] = dict(ext=0, card='HIERARCH ESO INS OPTI5 NAME')
-##    
+##
 ##        # Dark-flat identification via exposure number
 ##        self.meta['seq_expno'] = dict(ext=0, card='HIERARCH ESO TPL EXPNO')
 ##
@@ -682,7 +682,7 @@ class NOTNTEVISSpectrograph(NOTNTESpectrograph):
 ##            return good_exp & (fitstbl['target'] == 'BIAS')
 ##        if ftype == 'sky':
 ##            return good_exp & (fitstbl['target'] == 'DARK')
-##        
+##
 ##        if ftype in ['pixelflat', 'trace']:
 ##            # Flats and trace frames are typed together
 ##            # Lamp on flats are taken first (odd exposure number)
@@ -690,14 +690,14 @@ class NOTNTEVISSpectrograph(NOTNTESpectrograph):
 ##                               | (fitstbl['target'] == 'LAMP,QFLAT')
 ##                               | (fitstbl['target'] == 'LAMP,FLAT'))
 ##                               & good_flat_seq)
-##        
+##
 ##        if ftype in ['dark']:
 ##            # Lamp off flats are taken second (even exposure number)
 ##            return good_exp & (((fitstbl['target'] == 'LAMP,DFLAT')
 ##                                | (fitstbl['target'] == 'LAMP,QFLAT')
 ##                                | (fitstbl['target'] == 'LAMP,FLAT'))
 ##                               & good_dark_seq)
-##        
+##
 ##        if ftype == 'pinhole':
 ##            # Don't type pinhole
 ##            return np.zeros(len(fitstbl), dtype=bool)
@@ -852,7 +852,7 @@ class NOTNTEVISSpectrograph(NOTNTESpectrograph):
 ##    camera = 'XShooter_UVB'
 ##    supported = True
 ##    comment = 'See :doc:`xshooter`'
-##    
+##
 ##    def get_detector_par(self, det, hdu=None):
 ##        """
 ##        Return metadata for the selected detector.
@@ -882,7 +882,7 @@ class NOTNTEVISSpectrograph(NOTNTESpectrograph):
 ##            platescale      = 0.161, # average from order 14 and order 24, see manual
 ##            darkcurr        = 0.0,
 ##            saturation      = 65000.,
-##            nonlinear       = 0.86,  
+##            nonlinear       = 0.86,
 ##            mincounts       = -1e10,
 ##            numamplifiers   = 1,
 ##            gain            = np.atleast_1d(1.61),
@@ -897,7 +897,7 @@ class NOTNTEVISSpectrograph(NOTNTESpectrograph):
 ##    def default_pypeit_par(cls):
 ##        """
 ##        Return the default parameters to use for this instrument.
-##        
+##
 ##        Returns:
 ##            :class:`~pypeit.par.pypeitpar.PypeItPar`: Parameters required by
 ##            all of ``PypeIt`` methods.
@@ -923,8 +923,8 @@ class NOTNTEVISSpectrograph(NOTNTESpectrograph):
 ##
 ##        # 1D wavelength solution
 ##        par['calibrations']['wavelengths']['lamps'] = ['ThAr_XSHOOTER_UVB']
-##        par['calibrations']['wavelengths']['n_final'] = [3] + 10*[4] 
-##        par['calibrations']['wavelengths']['rms_threshold'] = 0.60 
+##        par['calibrations']['wavelengths']['n_final'] = [3] + 10*[4]
+##        par['calibrations']['wavelengths']['rms_threshold'] = 0.60
 ##        par['calibrations']['wavelengths']['sigdetect'] = 3.0 # Pretty faint lines in places
 ##        # Reidentification parameters
 ##        par['calibrations']['wavelengths']['method'] = 'reidentify'
@@ -935,7 +935,7 @@ class NOTNTEVISSpectrograph(NOTNTESpectrograph):
 ##        par['calibrations']['wavelengths']['ech_nspec_coeff'] = 4
 ##        par['calibrations']['wavelengths']['ech_norder_coeff'] = 4
 ##        par['calibrations']['wavelengths']['ech_sigrej'] = 3.0
-##        
+##
 ##        par['calibrations']['wavelengths']['cc_thresh'] = 0.50
 ##        par['calibrations']['wavelengths']['cc_local_thresh'] = 0.50
 ##
@@ -1088,6 +1088,3 @@ class NOTNTEVISSpectrograph(NOTNTESpectrograph):
 ##        # TODO -- Mask bad column if it is problematic (it isn't so far)
 ##
 ##        return bpm_img
-
-
-
