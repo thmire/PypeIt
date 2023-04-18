@@ -1,4 +1,6 @@
 Notes on wavelength calibration success
 
-Order 13: Good
-Order 15: Only picks up the lines in a small region, not at large spectral axis values
+Order 10, 11,12,13,14: Good
+Order 15: This order is close to and running off from the detector.
+          pypeit_identify did not pick up the lines at large pixel values,
+          despite the tracing seeming OK.
