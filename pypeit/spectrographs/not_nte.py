@@ -265,7 +265,7 @@ class NOTNTEVISSpectrograph(NOTNTESpectrograph):
 ##        par['calibrations']['wavelengths']['rms_threshold'] = 0.25
         par['calibrations']['wavelengths']['sigdetect'] = 5.0
         par['calibrations']['wavelengths']['fwhm'] = 4.0
-        par['calibrations']['wavelengths']['n_final'] = 4
+        par['calibrations']['wavelengths']['n_final'] = 4# [2, 4, 4, 4, 4, 4, 4, 4]
         par['calibrations']['wavelengths']['nreid_min'] = 2 # important
         
         par['calibrations']['wavelengths']['reference'] = 'arc'
@@ -278,7 +278,15 @@ class NOTNTEVISSpectrograph(NOTNTESpectrograph):
         par['calibrations']['wavelengths']['ech_nspec_coeff'] = 5
         par['calibrations']['wavelengths']['ech_norder_coeff'] = 5
         par['calibrations']['wavelengths']['ech_sigrej'] = 3.0
+
+        # tilts
+        #par['calibrations']['tilts']['spat_order'] =  3
         
+        # Flat
+        par['calibrations']['flatfield']['slit_illum_finecorr'] = False # turn off for now
+
+        # extraction
+        par['reduce']['findobj']['maxnumber_sci'] = 2 
 
         # commenting out everything, lets tune this once we begin to run the code
 
