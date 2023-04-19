@@ -266,7 +266,7 @@ class NOTNTEVISSpectrograph(NOTNTESpectrograph):
         par['calibrations']['wavelengths']['sigdetect'] = 5.0
         par['calibrations']['wavelengths']['fwhm'] = 4.0
         par['calibrations']['wavelengths']['n_final'] = 4
-
+        par['calibrations']['wavelengths']['nreid_min'] = 2
         
         par['calibrations']['wavelengths']['reference'] = 'arc'
         par['calibrations']['wavelengths']['reid_arxiv'] = 'not_nte_vis.fits'
