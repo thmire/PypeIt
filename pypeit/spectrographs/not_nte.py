@@ -266,12 +266,12 @@ class NOTNTEVISSpectrograph(NOTNTESpectrograph):
         par['calibrations']['wavelengths']['sigdetect'] = 5.0
         par['calibrations']['wavelengths']['fwhm'] = 4.0
         par['calibrations']['wavelengths']['n_final'] = 4
-        par['calibrations']['wavelengths']['nreid_min'] = 2
+        par['calibrations']['wavelengths']['nreid_min'] = 2 # important
         
         par['calibrations']['wavelengths']['reference'] = 'arc'
         par['calibrations']['wavelengths']['reid_arxiv'] = 'not_nte_vis.fits'
         par['calibrations']['wavelengths']['method'] = 'full_template'
-        par['calibrations']['wavelengths']['nsnippet'] = 1
+        par['calibrations']['wavelengths']['nsnippet'] = 1 # important
 
         # Echelle parameters
         par['calibrations']['wavelengths']['echelle'] = True
@@ -359,7 +359,7 @@ class NOTNTEVISSpectrograph(NOTNTESpectrograph):
         """
         Number of orders observed for this spectograph.
         """
-        return 8 # SHOULD BE 8, THIS IS A HACK
+        return 8
 
     @property
     def order_spat_pos(self):
@@ -416,7 +416,7 @@ class NOTNTEVISSpectrograph(NOTNTESpectrograph):
         # ToDO Work this out
         
         # Right now I just assume constant
-        plate_scale = 0.23
+        plate_scale = np.ones(8) * 0.23 
         return plate_scale*binspatial
 
         # Not sure about this, commenting out
