@@ -220,8 +220,8 @@ class NOTNTEVISSpectrograph(NOTNTESpectrograph):
             numamplifiers   = 1,
             gain            = np.atleast_1d(0.595), # Get this value
             ronoise         = np.atleast_1d(3.0), # Get this value
-            datasec=np.atleast_1d('[11:1024,:]'),  # Just trying something here
-            oscansec=np.atleast_1d('[0:11,:]'),  # Just trying something here
+            datasec=np.atleast_1d('[{}:{},:]'.format(1,1024)),  # Just trying something here
+            oscansec= None ,  # Overscan not actually required
         )
 
         return detector_container.DetectorContainer(**detector_dict)
@@ -287,6 +287,12 @@ class NOTNTEVISSpectrograph(NOTNTESpectrograph):
 
         # extraction
         par['reduce']['findobj']['maxnumber_sci'] = 2 
+
+
+        # Sensitivity function parameters
+        par['sensfunc']['algorithm'] = 'IR'
+        #par['sensfunc']['polyorder'] = [9, 11, 11, 9, 9, 8, 8, 7, 7, 7, 7, 7, 7, 7, 7]
+        #par['sensfunc']['IR']['telgridfile'] = 'TelFit_Paranal_VIS_4900_11100_R25000.fits'
 
         # commenting out everything, lets tune this once we begin to run the code
 
@@ -355,11 +361,7 @@ class NOTNTEVISSpectrograph(NOTNTESpectrograph):
 ##        par['reduce']['findobj']['maxnumber_sci'] = 2  # Assume that there is only one object on the slit.
 ##        par['reduce']['findobj']['maxnumber_std'] = 1  # Assume that there is only one object on the slit.
 ##        # Continnum order for determining thresholds
-##
-##        # Sensitivity function parameters
-##        par['sensfunc']['algorithm'] = 'IR'
-##        par['sensfunc']['polyorder'] = [9, 11, 11, 9, 9, 8, 8, 7, 7, 7, 7, 7, 7, 7, 7]
-##        par['sensfunc']['IR']['telgridfile'] = 'TelFit_Paranal_VIS_4900_11100_R25000.fits'
+
         return par
 
     @property
@@ -479,7 +481,14 @@ class NOTNTEVISSpectrograph(NOTNTESpectrograph):
         bpm_img = super().bpm(filename, det, shape=shape, msbias=msbias)
 
         shape = bpm_img.shape
+        print(shape)
+        bpm_dir = data.Paths.static_calibs / 'not_nte'
+        #try :
+        bpm_loc = np.loadtxt(bpm_dir / 'mask_VIS.dat', usecols=(0,1))
+        print(shape,np.max(bpm_loc[:,0].astype(int)),np.max(bpm_loc[:,1].astype(int)))
 
+        bpm_img[bpm_loc[:,1].astype(int),bpm_loc[:,0].astype(int)] = 1.
+        
         return bpm_img
 
 
