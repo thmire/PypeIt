@@ -1,0 +1,4 @@
+The mask_VIS.dat file is a list of pairs of integers. 
+The second digit represents the rows going up the detector (after pypeit has reoriented the detector to its standard orientation
+The first digit is the first column to NOT mask, goinf left to right.
+This file is used to make the bpm that masks of the +/- 1 orders 

@@ -478,16 +478,16 @@ class NOTNTEVISSpectrograph(NOTNTESpectrograph):
             0.
         """
         # Call the base-class method to generate the empty bpm
+
+        # THE BELOW MASKS OUT THE +/- 1 ORDERS, NOT A REAL BPM AND MAY NOT BE IN THE FINAL CODE
+        
         bpm_img = super().bpm(filename, det, shape=shape, msbias=msbias)
-
-        shape = bpm_img.shape
-        print(shape)
         bpm_dir = data.Paths.static_calibs / 'not_nte'
-        #try :
         bpm_loc = np.loadtxt(bpm_dir / 'mask_VIS.dat', usecols=(0,1))
-        print(shape,np.max(bpm_loc[:,0].astype(int)),np.max(bpm_loc[:,1].astype(int)))
+        
+        for i in range(0,4096):
+            bpm_img[i] = np.append(np.ones(int(bpm_loc[i][0])),np.zeros(int(1024-bpm_loc[i][0])))
 
-        bpm_img[bpm_loc[:,1].astype(int),bpm_loc[:,0].astype(int)] = 1.
         
         return bpm_img
 
