@@ -249,24 +249,25 @@ class NOTNTEVISSpectrograph(NOTNTESpectrograph):
         par['calibrations']['slitedges']['fit_order'] = 5
         par['calibrations']['slitedges']['max_shift_adj'] = 0.5
         par['calibrations']['slitedges']['trace_thresh'] = 10
-        par['calibrations']['slitedges']['fit_min_spec_length'] = 0.3
-        #par['calibrations']['slitedges']['fit_function'] = "polynomial"
+        par['calibrations']['slitedges']['fit_min_spec_length'] = 0.1
+        par['calibrations']['slitedges']['length_range'] = 0.3
 
         par['calibrations']['slitedges']['det_buffer'] = 1
         par['calibrations']['slitedges']['max_nudge'] = 1
-        #par['calibrations']['slitedges']['left_right_pca'] = True
+        #par['calibrations']['slitedges']['left_right_pca'] = False
         #par['calibrations']['slitedges']['add_slits'] = "1:2280:35:124"
         #par['calibrations']['slitedges']['sync_predict'] = "nearest"
-        #par['calibrations']['slitedges']['smash_range'] = [0.3,0.7]
+        par['calibrations']['slitedges']['smash_range'] = [0.3,0.7]
+        #par['calibrations']['slitedges']['sobel_mode'] = "constant"
 
 
         # Start on wl calib
         par['calibrations']['wavelengths']['lamps'] = ["HgAr_NTE_VIS"]
-##        par['calibrations']['wavelengths']['rms_threshold'] = 0.25
-        par['calibrations']['wavelengths']['sigdetect'] = 5.0
+        par['calibrations']['wavelengths']['rms_threshold'] = 0.4
+        par['calibrations']['wavelengths']['sigdetect'] = 2.0
         par['calibrations']['wavelengths']['fwhm'] = 4.0
         par['calibrations']['wavelengths']['n_final'] = 4# [2, 4, 4, 4, 4, 4, 4, 4]
-        par['calibrations']['wavelengths']['nreid_min'] = 2 # important
+        par['calibrations']['wavelengths']['nreid_min'] = 1 # important
         
         par['calibrations']['wavelengths']['reference'] = 'arc'
         par['calibrations']['wavelengths']['reid_arxiv'] = 'not_nte_vis.fits'
@@ -285,8 +286,12 @@ class NOTNTEVISSpectrograph(NOTNTESpectrograph):
         # Flat
         par['calibrations']['flatfield']['slit_illum_finecorr'] = False # turn off for now
 
+        # skysub
+        par['reduce']['skysub']['bspline_spacing'] = 1
+
         # extraction
-        par['reduce']['findobj']['maxnumber_sci'] = 2 
+        par['reduce']['findobj']['maxnumber_sci'] = 1
+        par['reduce']['findobj']['maxnumber_std'] = 1
 
 
         # Sensitivity function parameters
