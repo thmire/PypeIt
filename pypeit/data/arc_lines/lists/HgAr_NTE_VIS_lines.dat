@@ -1,5 +1,8 @@
 | wave      |  ion |  amplitude |  Source       |
-| 4159.763  |  HgI |  17133058  |  NIST (sim)   |
+| 4046.565  |  HgI |  17133058  |  NIST (sim)   |
+| 4077.83   |  HgI | 10000      |  NIST (sim)   |
+| 4159.763  |  ArI |  17133058  |  NIST (sim)   |
+| 4165.354  |  ArI |  17133058  |  NIST (sim)   |
 | 4183.062  |  HgI |  2141632.2 |  NIST (sim)   |
 | 4199.5    |  HgI |  8566529   |  NIST (sim)   |
 | 4201.858  |  HgI |  17133058  |  NIST (sim)   |
@@ -12,6 +15,7 @@
 | 4334.78   |  HgI |  4283264.5 |  NIST (sim)   |
 | 4336.557  |  HgI |  2141632.2 |  NIST (sim)   |
 | 4340.4428 |  ArI |  11379310  |  NIST (sim)   |
+| 4344.855  |  HgI |  1070816.1 |  NIST (sim)   |
 | 4346.389  |  HgI |  1070816.1 |  NIST (sim)   |
 | 4348.7173 |  ArI |  34137932  |  NIST (sim)   |
 | 4359.5612 |  ArI |  2731034400|  NIST (sim)   |

@@ -18,7 +18,7 @@ wavelength_soln_files = [
 slits = [
          #49,188,313,429,538,641,739,836 # THIS FOR UNMASKED
          #82,198,323,439,548,651,749,845 # THIS FOR MASKED
-         49,198,313,429,538,641,739,836  # This is a blend
+         182,198,313,429,538,641,739,836  # This is a blend
          
          ]
 

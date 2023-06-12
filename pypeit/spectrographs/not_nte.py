@@ -381,13 +381,14 @@ class NOTNTEVISSpectrograph(NOTNTESpectrograph):
         """
         Return the expected spatial position of each echelle order.
         """
-        return np.array([
-            0.07128906, 0.20214844, 
-            0.32421875, 0.43847656,
-                      0.54492188, 0.64453125, 0.73925781, 0.83398438])
+
+        return np.array([0.17285156, 0.31542969, 0.43554688, 0.54980469,
+                         0.64941406,0.75195312, 0.84960938, 0.9375])
 
 
-        #np.array([73, 207, 332, 449, 558, 660 ,757,854]) are the positions used
+        #np.array([73, 207, 332, 449, 558, 660 ,757,854]) were the positions used
+        #np.array([177, 323, 446, 563, 665, 770 ,870,960]) are the new positions used
+
         # normalised by the detector height
 
     @property
