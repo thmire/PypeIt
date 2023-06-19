@@ -65,6 +65,7 @@ class NOTNTESpectrograph(spectrograph.Spectrograph):
         self.meta['instrument'] = dict(ext=0, card='INSTRUME')
 
         # Dithering
+        # Need to edit this for NIR
 ##        self.meta['dithpat'] = dict(ext=0, card='DPATNAME')
 ##        self.meta['dithpos'] = dict(card=None, compound=True)
 ##        self.meta['dithoff'] = dict(ext=0, card='YOFFSET')
@@ -153,7 +154,7 @@ class NOTNTESpectrograph(spectrograph.Spectrograph):
 
         # Copying not_alfosc, might need to add more
         # Also using the header decisions made in Lise's python script
-        # etalon? NIR? missing Sky
+        # etalon? NIR? 
         # Might need to include telluric and/or sky in the science classified ftype
 
         if ftype == 'science':
@@ -182,7 +183,7 @@ class NOTNTEVISSpectrograph(NOTNTESpectrograph):
     """
 
     name = 'not_nte_vis'
-    camera = 'nte_VIS'
+    camera = 'nte_vis'
     supported = False
     comment = 'See :doc:`nte`'
 
@@ -298,74 +299,6 @@ class NOTNTEVISSpectrograph(NOTNTESpectrograph):
         par['sensfunc']['algorithm'] = 'IR'
         #par['sensfunc']['polyorder'] = [9, 11, 11, 9, 9, 8, 8, 7, 7, 7, 7, 7, 7, 7, 7]
         #par['sensfunc']['IR']['telgridfile'] = 'TelFit_Paranal_VIS_4900_11100_R25000.fits'
-
-        # commenting out everything, lets tune this once we begin to run the code
-
-
-
-##        # X-SHOOTER arcs/tilts are also have different binning with bias
-##        # frames, so don't use bias frames. Don't use the biases for any
-##        # calibrations since it appears to be a different amplifier readout
-##        par['calibrations']['traceframe']['process']['overscan_method'] = 'median'
-##
-##        par['scienceframe']['process']['use_biasimage']=True
-##        par['scienceframe']['process']['use_illumflat']=True
-##        par['scienceframe']['process']['use_pixelflat']=True
-##        # Right now we are using the overscan and not biases becuase the
-##        # standards are read with a different read mode and we don't yet have
-##        # the option to use different sets of biases for different standards,
-##        # or use the overscan for standards but not for science frames
-##        par['calibrations']['standardframe']['process']['use_illumflat']=True
-##        par['calibrations']['standardframe']['process']['use_pixelflat']=True
-##
-##        par['calibrations']['slitedges']['edge_thresh'] = 8.0
-##        par['calibrations']['slitedges']['fit_order'] = 8
-##        par['calibrations']['slitedges']['max_shift_adj'] = 0.5
-##        par['calibrations']['slitedges']['trace_thresh'] = 10.
-##        par['calibrations']['slitedges']['left_right_pca'] = True
-##        par['calibrations']['slitedges']['length_range'] = 0.3
-##
-##        # These are the defaults
-##        par['calibrations']['tilts']['tracethresh'] = 15
-##        par['calibrations']['tilts']['spat_order'] =  3
-##        par['calibrations']['tilts']['spec_order'] =  5
-##
-##        # 1D wavelength solution
-##        par['calibrations']['wavelengths']['lamps'] = ['ThAr_XSHOOTER_VIS']
-##        # The following is for 1x1 binning. TODO GET BINNING SORTED OUT!!
-##        par['calibrations']['wavelengths']['rms_threshold'] = 0.50
-##        par['calibrations']['wavelengths']['sigdetect'] = 5.0
-##        par['calibrations']['wavelengths']['n_final'] = [3] + 13*[4] + [3]
-##        # This is for 1x1 binning. Needs to be divided by binning for binned data!!
-##        par['calibrations']['wavelengths']['fwhm'] = 11.0
-##        # Reidentification parameters
-##        par['calibrations']['wavelengths']['method'] = 'reidentify'
-##        # TODO: the arxived solution is for 1x1 binning. It needs to be
-##        # generalized for different binning!
-##        par['calibrations']['wavelengths']['reid_arxiv'] = 'vlt_xshooter_vis1x1.fits'
-##        par['calibrations']['wavelengths']['cc_thresh'] = 0.50
-##        par['calibrations']['wavelengths']['cc_local_thresh'] = 0.50
-###        par['calibrations']['wavelengths']['ech_fix_format'] = True
-##        # Echelle parameters
-##        par['calibrations']['wavelengths']['echelle'] = True
-##        par['calibrations']['wavelengths']['ech_nspec_coeff'] = 4
-##        par['calibrations']['wavelengths']['ech_norder_coeff'] = 4
-##        par['calibrations']['wavelengths']['ech_sigrej'] = 3.0
-##
-##        # Flats
-##        par['calibrations']['flatfield']['tweak_slits_thresh'] = 0.90
-##        par['calibrations']['flatfield']['tweak_slits_maxfrac'] = 0.10
-##
-##        # Extraction
-##        par['reduce']['skysub']['bspline_spacing'] = 0.5
-##        par['reduce']['skysub']['global_sky_std'] = False
-##        # local sky subtraction operates on entire slit
-##        par['reduce']['extraction']['model_full_slit'] = True
-##        # Mask 3 edges pixels since the slit is short, insted of default (5,5)
-##        par['reduce']['findobj']['find_trim_edge'] = [3,3]
-##        par['reduce']['findobj']['maxnumber_sci'] = 2  # Assume that there is only one object on the slit.
-##        par['reduce']['findobj']['maxnumber_std'] = 1  # Assume that there is only one object on the slit.
-##        # Continnum order for determining thresholds
 
         return par
 
@@ -498,68 +431,73 @@ class NOTNTEVISSpectrograph(NOTNTESpectrograph):
         return bpm_img
 
 
+class NOTNTENIRSpectrograph(NOTNTESpectrograph):
+    """
+    Child to handle NTE/NIR specific code
+    """
 
-##class VLTXShooterNIRSpectrograph(VLTXShooterSpectrograph):
-##    """
-##    Child to handle VLT/XSHOOTER specific code
-##    """
-##
-##    name = 'vlt_xshooter_nir'
-##    camera = 'XShooter_NIR'
-##    supported = True
-##    comment = 'See :doc:`xshooter`'
-##
-##    def get_detector_par(self, det, hdu=None):
-##        """
-##        Return metadata for the selected detector.
-##
-##        Args:
-##            det (:obj:`int`):
-##                1-indexed detector number.
-##            hdu (`astropy.io.fits.HDUList`_, optional):
-##                The open fits file with the raw image of interest.  If not
-##                provided, frame-dependent parameters are set to a default.
-##
-##        Returns:
-##            :class:`~pypeit.images.detector_container.DetectorContainer`:
-##            Object with the detector metadata.
-##        """
-##        # Detector 1
-##        detector_dict = dict(
-##            binning         = '1,1',  # No binning in near-IR
-##            det             = 1,
-##            dataext         = 0,
-##            specaxis        = 1,
-##            specflip        = False,
-##            spatflip        = False,
-##            platescale      = 0.197, # average between order 11 & 30, see manual
-##            darkcurr        = 0.0,
-##            saturation      = 2.0e5, # I think saturation may never be a problem here since there are many DITs
-##            nonlinear       = 0.86,
-##            mincounts       = -1e10,
-##            numamplifiers   = 1,
-##            gain            = np.atleast_1d(2.12), #
-##            ronoise         = np.atleast_1d(8.0), # ?? more precise value? #TODO the read noise is exposure time  dependent and should be grabbed from header
-##            datasec         = np.atleast_1d('[4:2044,4:]'), # These are all unbinned pixels
-##            # EMA: No real overscan for XSHOOTER-NIR:
-##            # See Table 6 in http://www.eso.org/sci/facilities/paranal/instruments/xshooter/doc/VLT-MAN-ESO-14650-4942_P103v1.pdf
-##            # The overscan region below contains only zeros
-##            # ToDo should we just set it as empty?
-##            #  JXP says yes
-##            #oscansec        = np.atleast_1d('[4:2044,1:3]'), # These are all unbinned pixels.
-##            )
-##        return detector_container.DetectorContainer(**detector_dict)
-##
-##    @classmethod
-##    def default_pypeit_par(cls):
-##        """
-##        Return the default parameters to use for this instrument.
-##
-##        Returns:
-##            :class:`~pypeit.par.pypeitpar.PypeItPar`: Parameters required by
-##            all of ``PypeIt`` methods.
-##        """
-##        par = super().default_pypeit_par()
+    name = 'not_nte_nir'
+    camera = 'nte_nir'
+    supported = False
+    comment = 'See :doc:`nte`'
+
+    def get_detector_par(self, det, hdu=None):
+        """
+        Return metadata for the selected detector.
+
+        Args:
+            det (:obj:`int`):
+                1-indexed detector number.
+            hdu (`astropy.io.fits.HDUList`_, optional):
+                The open fits file with the raw image of interest.  If not
+                provided, frame-dependent parameters are set to a default.
+
+        Returns:
+            :class:`~pypeit.images.detector_container.DetectorContainer`:
+            Object with the detector metadata.
+        """
+        # Detector 1
+        detector_dict = dict(
+            binning         = '1,1',  # No binning in near-IR
+            det             = 1,
+            dataext         = 0,
+            specaxis        = 1,
+            specflip        = False,
+            spatflip        = False,
+            platescale      = 0.46, # taken from NTE_NOT 2022 presentation slides, requires checking
+            darkcurr        = 0.0, # CHECK
+            saturation      = 2.0e5, # CHECK, although saturation should never be a problem in IR if you are observing properly
+            nonlinear       = 0.86, # CHECK,
+            mincounts       = -1e10, 
+            numamplifiers   = 1,
+            gain            = np.atleast_1d(2.16), # e/ADU, from the MPIA test report
+            ronoise         = np.atleast_1d(10.6), # e-, from the MPIA test report
+            datasec=np.atleast_1d('[{}:{},:]'.format(1,2048)),  # Just trying something here
+            #datasec         = np.atleast_1d('[4:2044,4:]'), # These are all unbinned pixels
+            oscansec= None , # Should check if we want an overscan
+            )
+        return detector_container.DetectorContainer(**detector_dict)
+
+    @classmethod
+    def default_pypeit_par(cls):
+        """
+        Return the default parameters to use for this instrument.
+
+        Returns:
+            :class:`~pypeit.par.pypeitpar.PypeItPar`: Parameters required by
+            all of ``PypeIt`` methods.
+        """
+
+        par = super().default_pypeit_par()
+        # Turn off illumflat, bias, oversscan and dark (?)
+        turn_off = dict(use_illumflat=False, use_biasimage=False, use_overscan=False,
+                        use_darkimage=False)
+        par.reset_all_processimages_par(**turn_off)
+
+
+# The below is all the X-shooter settings
+
+##        par = super().default_pypeit_par()        
 ##
 ##        # Turn off illumflat
 ##        turn_off = dict(use_illumflat=False, use_biasimage=False, use_overscan=False,
@@ -648,40 +586,42 @@ class NOTNTEVISSpectrograph(NOTNTESpectrograph):
 ##        par['sensfunc']['IR']['telgridfile'] = 'TelFit_Paranal_NIR_9800_25000_R25000.fits'
 ##
 ##        return par
-##
-##
-##    def init_meta(self):
-##        """
-##        Define how metadata are derived from the spectrograph files.
-##
-##        That is, this associates the ``PypeIt``-specific metadata keywords
-##        with the instrument-specific header cards using :attr:`meta`.
-##        """
-##        super().init_meta()
-##        # No binning in the NIR
-##        self.meta['binning'] = dict(card=None, default='1,1')
-##
-##        # Required
-##        self.meta['decker'] = dict(ext=0, card='HIERARCH ESO INS OPTI5 NAME')
-##
-##        # Dark-flat identification via exposure number
-##        self.meta['seq_expno'] = dict(ext=0, card='HIERARCH ESO TPL EXPNO')
-##
-##    def pypeit_file_keys(self):
-##        """
-##        Define the list of keys to be output into a standard ``PypeIt`` file.
-##
-##        Returns:
-##            :obj:`list`: The list of keywords in the relevant
-##            :class:`~pypeit.metadata.PypeItMetaData` instance to print to the
-##            :ref:`pypeit_file`.
-##        """
-##        pypeit_keys = super().pypeit_file_keys()
-##        # TODO: Why are these added here? See
-##        # pypeit.metadata.PypeItMetaData.set_pypeit_cols
-##        pypeit_keys += ['calib', 'comb_id', 'bkg_id']
-##        return pypeit_keys
-##
+
+
+    def init_meta(self):
+        """
+        Define how metadata are derived from the spectrograph files.
+
+        That is, this associates the ``PypeIt``-specific metadata keywords
+        with the instrument-specific header cards using :attr:`meta`.
+        """
+        super().init_meta()
+        # No binning in the NIR (true also for nte?)
+        self.meta['binning'] = dict(card=None, default='1,1')
+
+        # Required
+        #self.meta['decker'] = dict(ext=0, card='HIERARCH ESO INS OPTI5 NAME')
+
+        # Dark-flat identification via exposure number
+        #self.meta['seq_expno'] = dict(ext=0, card='HIERARCH ESO TPL EXPNO')
+
+    def pypeit_file_keys(self):
+        """
+        Define the list of keys to be output into a standard ``PypeIt`` file.
+
+        Returns:
+            :obj:`list`: The list of keywords in the relevant
+            :class:`~pypeit.metadata.PypeItMetaData` instance to print to the
+            :ref:`pypeit_file`.
+        """
+        pypeit_keys = super().pypeit_file_keys()
+        # TODO: Why are these added here? See
+        # pypeit.metadata.PypeItMetaData.set_pypeit_cols
+        pypeit_keys += ['calib', 'comb_id', 'bkg_id']
+        return pypeit_keys
+
+
+    # Use this if we need different frame type rules here than for VIS
 ##    def check_frame_type(self, ftype, fitstbl, exprng=None):
 ##        """
 ##        Check for frames of the provided type.
@@ -744,37 +684,40 @@ class NOTNTEVISSpectrograph(NOTNTESpectrograph):
 ##
 ##        msgs.warn('Cannot determine if frames are of type {0}.'.format(ftype))
 ##        return np.zeros(len(fitstbl), dtype=bool)
-##
-##    def bpm(self, filename, det, shape=None, msbias=None):
-##        """
-##        Generate a default bad-pixel mask.
-##
-##        Even though they are both optional, either the precise shape for
-##        the image (``shape``) or an example file that can be read to get
-##        the shape (``filename`` using :func:`get_image_shape`) *must* be
-##        provided.
-##
-##        Args:
-##            filename (:obj:`str` or None):
-##                An example file to use to get the image shape.
-##            det (:obj:`int`):
-##                1-indexed detector number to use when getting the image
-##                shape from the example file.
-##            shape (tuple, optional):
-##                Processed image shape
-##                Required if filename is None
-##                Ignored if filename is not None
-##            msbias (`numpy.ndarray`_, optional):
-##                Master bias frame used to identify bad pixels
-##
-##        Returns:
-##            `numpy.ndarray`_: An integer array with a masked value set
-##            to 1 and an unmasked value set to 0.  All values are set to
-##            0.
-##        """
-##        # Call the base-class method to generate the empty bpm
-##        bpm_img = super().bpm(filename, det, shape=shape, msbias=msbias)
-##
+
+    def bpm(self, filename, det, shape=None, msbias=None):
+        """
+        Generate a default bad-pixel mask.
+
+        Even though they are both optional, either the precise shape for
+        the image (``shape``) or an example file that can be read to get
+        the shape (``filename`` using :func:`get_image_shape`) *must* be
+        provided.
+
+        Args:
+            filename (:obj:`str` or None):
+                An example file to use to get the image shape.
+            det (:obj:`int`):
+                1-indexed detector number to use when getting the image
+                shape from the example file.
+            shape (tuple, optional):
+                Processed image shape
+                Required if filename is None
+                Ignored if filename is not None
+            msbias (`numpy.ndarray`_, optional):
+                Master bias frame used to identify bad pixels
+
+        Returns:
+            `numpy.ndarray`_: An integer array with a masked value set
+            to 1 and an unmasked value set to 0.  All values are set to
+            0.
+        """
+        # Call the base-class method to generate the empty bpm
+        bpm_img = super().bpm(filename, det, shape=shape, msbias=msbias)
+        # Should return an empty bpm
+        return bpm_img
+
+
 ##        if det == 1:
 ##            bpm_dir = data.Paths.static_calibs / 'vlt_xshoooter'
 ##            try :
@@ -802,67 +745,66 @@ class NOTNTEVISSpectrograph(NOTNTESpectrograph):
 ##                bpm_img[bpm_loc[:,0].astype(int),bpm_loc[:,1].astype(int)] = 1.
 ##
 ##        return bpm_img
-##
-##    @property
-##    def norders(self):
-##        """
-##        Number of orders for this spectograph. Should only defined for
-##        echelle spectrographs, and it is undefined for the base class.
-##        """
-##        return 16
-##
-##    @property
-##    def order_spat_pos(self):
-##        """
-##        Return the expected spatial position of each echelle order.
-##        """
-##        return np.array([0.08284662, 0.1483813 , 0.21158701, 0.27261607,
-##                         0.33141317, 0.38813936, 0.44310197, 0.49637422,
-##                         0.54839496, 0.59948157, 0.65005956, 0.70074477,
-##                         0.75240745, 0.80622583, 0.86391259, 0.9280528 ])
-##
-##    @property
-##    def orders(self):
-##        """
-##        Return the order number for each echelle order.
-##        """
-##        return np.arange(26, 10, -1, dtype=int)
-##
-##    @property
-##    def spec_min_max(self):
-##        """
-##        Return the minimum and maximum spectral pixel expected for the
-##        spectral range of each order.
-##        """
-##        spec_max = np.asarray([1467,1502,1540, 1580,1620,1665,1720, 1770,1825,1895, 1966, 2000,2000,2000,2000,2000])
-##        spec_min = np.asarray([420 ,390 , 370,  345, 315, 285, 248,  210, 165, 115,   63,   10,   0,   0,   0,   0])
-##        return np.vstack((spec_min, spec_max))
-##
-##    def order_platescale(self, order_vec, binning=None):
-##        """
-##        Return the platescale for each echelle order.
-##
-##        This routine is only defined for echelle spectrographs, and it is
-##        undefined in the base class.
-##
-##        Args:
-##            order_vec (`numpy.ndarray`_):
-##                The vector providing the order numbers.
-##            binning (:obj:`str`, optional):
-##                The string defining the spectral and spatial binning.
-##
-##        Returns:
-##            `numpy.ndarray`_: An array with the platescale for each order
-##            provided by ``order``.
-##        """
-##        # TODO: Either assume a linear trend or measure this
-##        # X-shooter manual says, but gives no exact numbers per order.
-##        # NIR: 52.4 pixels (0.210"/pix) at order 11 to 59.9 pixels (0.184"/pix) at order 26.
-##
-##        # Right now I just assume a simple linear trend
-##        plate_scale = 0.184 + (order_vec - 26)*(0.184-0.210)/(26 - 11)
-##        return plate_scale
-##
+
+    @property
+    def norders(self):
+        """
+        Number of orders for this spectograph. Should only defined for
+        echelle spectrographs, and it is undefined for the base class.
+        """
+        return 5
+
+    @property
+    def order_spat_pos(self):
+        """
+        Return the expected spatial position of each echelle order.
+        """
+        return np.array([0.13720703, 0.12792969, 0.22949219, 0.30761719, 0.45898438])
+    
+        # using 281,262,470,630,940 / 2048
+
+    @property
+    def orders(self):
+        """
+        Return the order number for each echelle order.
+        """
+        return np.arange(7, 2, -1, dtype=int) # orders 7-3, from NTE_NOT_2022 slides
+
+    @property
+    def spec_min_max(self):
+        """
+        Return the minimum and maximum spectral pixel expected for the
+        spectral range of each order.
+        """
+        spec_max = np.asarray([2048]*5)
+        spec_min = np.asarray([0]*5)
+        return np.vstack((spec_min, spec_max))
+
+    def order_platescale(self, order_vec, binning=None):
+        """
+        Return the platescale for each echelle order.
+
+        This routine is only defined for echelle spectrographs, and it is
+        undefined in the base class.
+
+        Args:
+            order_vec (`numpy.ndarray`_):
+                The vector providing the order numbers.
+            binning (:obj:`str`, optional):
+                The string defining the spectral and spatial binning.
+
+        Returns:
+            `numpy.ndarray`_: An array with the platescale for each order
+            provided by ``order``.
+        """
+        # TODO: Either assume a linear trend or measure this
+        # Should work this out properly
+
+        # Right now I just assume constant, this is not correct
+        plate_scale = np.ones(5) * 0.46
+        return plate_scale
+
+        # Skip this for now
 ##    @property
 ##    def dloglam(self):
 ##        """
@@ -872,14 +814,14 @@ class NOTNTEVISSpectrograph(NOTNTESpectrograph):
 ##        # the X-shooter orders. The specific loglam across the orders deviates
 ##        # from this value by +-6% from this first to final order
 ##        return 1.93724e-5
-##
-##    @property
-##    def loglam_minmax(self):
-##        """
-##        Return the base-10 logarithm of the first and last wavelength for
-##        ouput spectra.
-##        """
-##        return np.log10(9500.0), np.log10(26000)
+
+    @property
+    def loglam_minmax(self):
+        """
+        Return the base-10 logarithm of the first and last wavelength for
+        ouput spectra.
+        """
+        return np.log10(8500.0), np.log10(25000)
 
 ##class VLTXShooterUVBSpectrograph(VLTXShooterSpectrograph):
 ##    """
