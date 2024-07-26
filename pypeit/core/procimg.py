@@ -5,18 +5,18 @@
 """
 from IPython import embed
 
+import warnings
+
+from astropy.convolution import convolve, Box2DKernel
+from astropy.timeseries import LombScargle
+import astropy.stats
 import numpy as np
 import scipy.ndimage
 import scipy.optimize
 import scipy.signal
 
-from astropy.convolution import convolve, Box2DKernel
-from astropy.timeseries import LombScargle
-from astropy import stats
-
 from pypeit import msgs
 from pypeit import utils
-from pypeit.core import parse
 
 
 # NOTE: This is slower than utils.rebin_evlist by a factor of ~2, but avoids an
@@ -217,7 +217,7 @@ def lacosmic(sciframe, saturation=None, nonlinear=1., bpm=None, varframe=None, m
         msgs.info("Convolving image with Laplacian kernel")
         deriv = convolve(boxcar_replicate(_sciframe, 2), laplkernel, normalize_kernel=False,
                          boundary='extend')
-        s = utils.rebin_evlist(np.clip(deriv, 0, None), _sciframe.shape) * _inv_err / 2.0 
+        s = utils.rebinND(np.clip(deriv, 0, None), _sciframe.shape) * _inv_err / 2.0
 
         # Remove the large structures
         sp = s - scipy.ndimage.median_filter(s, size=5, mode='mirror')
@@ -589,7 +589,14 @@ def rect_slice_with_mask(image, mask, mask_val=1):
 def subtract_overscan(rawframe, datasec_img, oscansec_img, method='savgol', params=[5,65],
                       var=None):
     """
-    Subtract overscan.
+    Subtract the overscan
+
+    Possible values of ``method``:
+        - polynomial: Fit a polynomial to the overscan region and subtract it.
+        - savgol: Use a Savitzky-Golay filter to fit the overscan region and
+            subtract it.
+        - median: Use the median of the overscan region to subtract it.
+        - odd_even: Use the median of the odd and even rows/columns to subtract (MDM/OSMOS)
 
     Args:
         rawframe (`numpy.ndarray`_):
@@ -604,10 +611,11 @@ def subtract_overscan(rawframe, datasec_img, oscansec_img, method='savgol', para
             data, 1 for amplifier 1, 2 for amplifier 2, etc.
         method (:obj:`str`, optional):
             The method used to fit the overscan region.  Options are
-            polynomial, savgol, median.
+            chebyshev, polynomial, savgol, median.  ("polynomial" is deprecated
+            and will be removed)
         params (:obj:`list`, optional):
-            Parameters for the overscan subtraction.  For ``method=polynomial``,
-            set ``params`` to the order, number of pixels, number of repeats;
+            Parameters for the overscan subtraction.  For ``method=chebyshev``
+            or ``method=polynomial``set ``params`` to the order;
             for ``method=savgol``, set ``params`` to the order and window size;
             for ``method=median``, ``params`` are ignored.
         var (`numpy.ndarray`_, optional):
@@ -622,11 +630,11 @@ def subtract_overscan(rawframe, datasec_img, oscansec_img, method='savgol', para
     Returns:
         :obj:`tuple`: The input frame with the overscan region subtracted and an
         estimate of the variance in the overscan subtraction; both have the same
-        shape as the input ``rawframe``.  If ``var`` is no provided, the 2nd
+        shape as the input ``rawframe``.  If ``var`` is not provided, the 2nd
         returned object is None.
     """
     # Check input
-    if method.lower() not in ['polynomial', 'savgol', 'median']:
+    if method.lower() not in ['polynomial', 'chebyshev', 'savgol', 'median', 'odd_even']:
         msgs.error(f'Unrecognized overscan subtraction method: {method}')
     if rawframe.ndim != 2:
         msgs.error('Input raw frame must be 2D.')
@@ -671,10 +679,13 @@ def subtract_overscan(rawframe, datasec_img, oscansec_img, method='savgol', para
             # to the error in the mean
             osvar = np.pi/2*(np.sum(osvar)/osvar.size**2 if method.lower() == 'median' 
                              else np.sum(osvar, axis=compress_axis)/osvar.shape[compress_axis]**2)
+        # Method time
         if method.lower() == 'polynomial':
-            # TODO: Use np.polynomial.polynomial.polyfit instead?
-            c = np.polyfit(np.arange(osfit.size), osfit, params[0])
-            ossub = np.polyval(c, np.arange(osfit.size))
+            warnings.warn('Method "polynomial" is identical to "chebyshev".  Former will be deprecated.',
+                          DeprecationWarning)
+        if method.lower() in ['polynomial', 'chebyshev']:
+            poly = np.polynomial.Chebyshev.fit(np.arange(osfit.size), osfit, params[0])
+            ossub = poly(np.arange(osfit.size))
         elif method.lower() == 'savgol':
             ossub = scipy.signal.savgol_filter(osfit, params[1], params[0])
         elif method.lower() == 'median':
@@ -683,12 +694,47 @@ def subtract_overscan(rawframe, datasec_img, oscansec_img, method='savgol', para
             if var is not None:
                 _var[data_slice] = osvar
             continue
+        elif method.lower() == 'odd_even':
+            # Odd/even
+            # Different behavior depending on overscan geometry
+            _overscan = overscan if compress_axis == 1 else overscan.T
+            _no_overscan = no_overscan[data_slice] if compress_axis == 1 \
+                               else no_overscan[data_slice].T
+            # Compute median overscan of odd and even pixel stripes in overscan
+            odd = np.median(_overscan[:,1::2], axis=1)
+            even = np.median(_overscan[:,0::2], axis=1)
+            # Do the same for the data
+            odd_data = np.median(_no_overscan[:,1::2], axis=1)
+            even_data = np.median(_no_overscan[:,0::2], axis=1)
+            # Check for odd/even row alignment between overscan and data,
+            # which can be instrument/data reader-dependent when compress_axis is 0.
+            # Could be possibly be improved by removing average odd/even slopes in data
+            aligned = np.sign(np.median(odd-even)) == np.sign(np.median(odd_data-even_data))
+            if not aligned and compress_axis == 0:
+                odd, even = even, odd
+            # Now subtract
+            _no_overscan[:,1::2] -= odd[:,None]
+            _no_overscan[:,0::2] -= even[:,None]
+            no_overscan[data_slice] = _no_overscan if compress_axis == 1 else _no_overscan.T
+            if var is not None:
+                _osvar = var[os_slice] if compress_axis == 1 else var[os_slice].T
+                odd_var = np.sum(_osvar[:,1::2],axis=1)/_osvar[:,1::2].size**2
+                even_var = np.sum(_osvar[:,0::2],axis=1)/_osvar[:,0::2].size**2
+                if not aligned and compress_axis == 0:
+                    odd_var, even_var = even_var, odd_var
+                __var = _var[data_slice] if compress_axis == 1 else _var[data_slice].T
+                __var[:,1::2] = np.pi/2 * odd_var[:,None]
+                __var[:,0::2] = np.pi/2 * even_var[:,None]
+                _var[data_slice ] = __var if compress_axis == 1 else __var.T
+            continue
+
 
         # Subtract along the appropriate axis
         no_overscan[data_slice] -= (ossub[:, None] if compress_axis == 1 else ossub[None, :])
         if var is not None:
             _var[data_slice] = (osvar[:,None] if compress_axis == 1 else osvar[None,:])
 
+    # Return
     return no_overscan, _var
 
 
@@ -792,7 +838,9 @@ def subtract_pattern(rawframe, datasec_img, oscansec_img, frequency=None, axis=1
             sgnl = overscan[ii,:]
             LSfreq, power = LombScargle(pixels, sgnl).autopower(minimum_frequency=use_fr*(1-100/frame_orig.shape[1]), maximum_frequency=use_fr*(1+100/frame_orig.shape[1]), samples_per_peak=10)
             bst = np.argmax(power)
-            cc = np.polyfit(LSfreq[bst-2:bst+3],power[bst-2:bst+3],2)
+            imin = np.clip(bst-2,0,None)
+            imax = np.clip(bst+3,None,overscan.shape[1])
+            cc = np.polyfit(LSfreq[imin:imax],power[imin:imax],2)
             all_freq[ii] = -0.5*cc[1]/cc[0]
         cc = np.polyfit(all_rows, all_freq, 1)
         frq_mod = np.polyval(cc, all_rows) * (overscan.shape[1]-1)
@@ -808,7 +856,7 @@ def subtract_pattern(rawframe, datasec_img, oscansec_img, frequency=None, axis=1
         # Convert result to amplitude and phase
         amps = (np.abs(tmpamp))[idx] * (2.0 / overscan.shape[1])
 
-        # STEP 2 - Using th emodel frequency, calculate how amplitude depends on pixel row (usually constant)
+        # STEP 2 - Using the model frequency, calculate how amplitude depends on pixel row (usually constant)
         # Use the above to as initial guess parameters for a chi-squared minimisation of the amplitudes
         msgs.info("Measuring amplitude-pixel dependence of amplifier {0:d}".format(amp))
         nspec = overscan.shape[0]
@@ -875,8 +923,8 @@ def subtract_pattern(rawframe, datasec_img, oscansec_img, frequency=None, axis=1
         tmp = outframe.copy()
         tmp[osd_slice] -= model_pattern
         mod_oscan, _ = rect_slice_with_mask(tmp, tmp_oscan, amp)
-        old_ron = stats.sigma_clipped_stats(overscan, sigma=5)[-1]
-        new_ron = stats.sigma_clipped_stats(overscan-mod_oscan, sigma=5)[-1]
+        old_ron = astropy.stats.sigma_clipped_stats(overscan, sigma=5)[-1]
+        new_ron = astropy.stats.sigma_clipped_stats(overscan-mod_oscan, sigma=5)[-1]
         msgs.info(f'Effective read noise of amplifier {amp} reduced by a factor of {old_ron/new_ron:.2f}x')
 
         # Subtract the model pattern from the full datasec
@@ -1084,7 +1132,7 @@ def trim_frame(frame, mask):
         `numpy.ndarray`_: Trimmed image
 
     Raises:
-        PypitError:
+        :class:`~pypeit.pypmsgs.PypeItError`:
             Error raised if the trimmed image includes masked values
             because the shape of the valid region is odd.
     """

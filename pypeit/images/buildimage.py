@@ -77,6 +77,18 @@ class TiltImage(pypeitimage.PypeItCalibrationImage):
     calib_type = 'Tiltimg'
 
 
+class ScatteredLightImage(pypeitimage.PypeItCalibrationImage):
+    """
+    Simple DataContainer for the Scattered Light Image
+    """
+    # version is inherited from PypeItImage
+
+    # I/O
+    output_to_disk = ('SCATTLIGHT_IMAGE', 'SCATTLIGHT_FULLMASK', 'SCATTLIGHT_DETECTOR')
+    hdu_prefix = 'SCATTLIGHT_'
+    calib_type = 'ScattLight'
+
+
 class TraceImage(pypeitimage.PypeItCalibrationImage):
     """
     Simple DataContainer for the Trace Image
@@ -111,7 +123,7 @@ class SkyRegions(pypeitimage.PypeItCalibrationImage):
         Args:
             calib_key (:obj:`str`):
                 String identifier of the calibration group.  See
-                :func:`construct_calib_key`.
+                :func:`~pypeit.calibframe.CalibFrame.construct_calib_key`.
             calib_dir (:obj:`str`, `Path`_, optional):
                 If provided, return the full path to the file given this
                 directory.
@@ -133,6 +145,7 @@ frame_image_classes = dict(
     arc=ArcImage,
     tilt=TiltImage,
     trace=TraceImage,
+    scattlight=ScatteredLightImage,
     align=AlignImage)
 """
 The list of classes that :func:`buildimage_fromlist` should use to decorate the
@@ -144,7 +157,7 @@ All of these **must** subclass from
 
 
 def buildimage_fromlist(spectrograph, det, frame_par, file_list, bias=None, bpm=None, dark=None,
-                        flatimages=None, maxiters=5, ignore_saturation=True, slits=None,
+                        scattlight=None, flatimages=None, maxiters=5, ignore_saturation=True, slits=None,
                         mosaic=None, calib_dir=None, setup=None, calib_id=None):
     """
     Perform basic image processing on a list of images and combine the results.
@@ -164,7 +177,7 @@ def buildimage_fromlist(spectrograph, det, frame_par, file_list, bias=None, bpm=
             The 1-indexed detector number(s) to process.  If a tuple, it must
             include detectors viable as a mosaic for the provided spectrograph;
             see :func:`~pypeit.spectrographs.spectrograph.Spectrograph.allowed_mosaics`.
-        frame_par (:class:`~pypeit.par.pypeitpar.FramePar`):
+        frame_par (:class:`~pypeit.par.pypeitpar.FrameGroupPar`):
             Parameters that dictate the processing of the images.  See
             :class:`~pypeit.par.pypeitpar.ProcessImagesPar` for the
             defaults.
@@ -179,6 +192,8 @@ def buildimage_fromlist(spectrograph, det, frame_par, file_list, bias=None, bpm=
         dark (:class:`~pypeit.images.buildimage.DarkImage`, optional):
             Dark-current image; passed directly to
             :func:`~pypeit.images.rawimage.RawImage.process` for all images.
+        scattlight (:class:`~pypeit.scattlight.ScatteredLight`, optional):
+            Scattered light model to be used to determine scattered light.
         flatimages (:class:`~pypeit.flatfield.FlatImages`, optional):
             Flat-field images for flat fielding; passed directly to
             :func:`~pypeit.images.rawimage.RawImage.process` for all images.
@@ -187,7 +202,7 @@ def buildimage_fromlist(spectrograph, det, frame_par, file_list, bias=None, bpm=
             (``sigma_clip`` is True), this sets the maximum number of
             rejection iterations.  If None, rejection iterations continue
             until no more data are rejected; see
-            :func:`~pypeit.core.combine.weighted_combine``.
+            :func:`~pypeit.core.combine.weighted_combine`.
         ignore_saturation (:obj:`bool`, optional):
             If True, turn off the saturation flag in the individual images
             before stacking.  This avoids having such values set to 0, which
@@ -234,7 +249,7 @@ def buildimage_fromlist(spectrograph, det, frame_par, file_list, bias=None, bpm=
 
     # Do it
     combineImage = combineimage.CombineImage(spectrograph, det, frame_par['process'], file_list)
-    pypeitImage = combineImage.run(bias=bias, bpm=bpm, dark=dark, flatimages=flatimages,
+    pypeitImage = combineImage.run(bias=bias, bpm=bpm, dark=dark, flatimages=flatimages, scattlight=scattlight,
                                    sigma_clip=frame_par['process']['clip'],
                                    sigrej=frame_par['process']['comb_sigrej'],
                                    maxiters=maxiters, ignore_saturation=ignore_saturation,

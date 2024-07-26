@@ -143,6 +143,10 @@ class TraceAlignment:
         # Attributes unique to this object
         self._alignprof = None
 
+        # Create a bad pixel mask
+        self.slit_bpm = self.slits.bitmask.flagged(self.slits.mask,
+                                                   and_not=self.slits.bitmask.exclude_for_reducing)
+
         # Completed steps
         self.steps = []
 
@@ -180,11 +184,17 @@ class TraceAlignment:
         slitid_img_init = self.slits.slit_img(initial=True)
         left, right, _ = self.slits.select_edges(initial=True)
         align_prof = dict({})
+
         # Go through the slits
         for slit_idx, slit_spat in enumerate(self.slits.spat_id):
+            if self.slit_bpm[slit_idx]:
+                msgs.info(f'Skipping bad slit/order {self.slits.slitord_id[slit_idx]} ({slit_idx+1}/{self.slits.nslits})')
+                self.slits.mask[slit_idx] = self.slits.bitmask.turn_on(self.slits.mask[slit_idx], 'BADALIGNCALIB')
+                continue
+
             specobj_dict = {'SLITID': slit_idx, 'DET': self.rawalignimg.detector.name,
                             'OBJTYPE': "align_profile", 'PYPELINE': self.spectrograph.pypeline}
-            msgs.info("Fitting alignment traces in slit {0:d}".format(slit_idx))
+            msgs.info("Fitting alignment traces in slit {0:d}/{1:d}".format(slit_idx+1, self.slits.nslits))
             align_traces = findobj_skymask.objs_in_slit(
                 self.rawalignimg.image, self.rawalignimg.ivar, slitid_img_init == slit_spat,
                 left[:, slit_idx], right[:, slit_idx],
@@ -195,7 +205,7 @@ class TraceAlignment:
                 nperslit=len(self.alignpar['locations']))
             if len(align_traces) != len(self.alignpar['locations']):
                 # Align tracing has failed for this slit
-                msgs.error("Alignment tracing has failed on slit {0:d}".format(slit_idx))
+                msgs.error("Alignment tracing has failed on slit {0:d}/{1:d}".format(slit_idx+1,self.slits.nslits))
             align_prof['{0:d}'.format(slit_idx)] = align_traces.copy()
 
         # Steps
@@ -221,12 +231,19 @@ class TraceAlignment:
         nbars = len(self.alignpar['locations'])
         # Generate an array containing the centroid of all bars
         align_traces = np.zeros((self.nspec, nbars, self.nslits))
-        for sl in range(self.nslits):
-            sls = '{0:d}'.format(sl)
+
+
+        # Go through the slits
+        for slit_idx, slit_spat in enumerate(self.slits.spat_id):
+            if self.slit_bpm[slit_idx]:
+                msgs.info(f'Skipping bad slit/order {self.slits.slitord_id[slit_idx]} ({slit_idx+1}/{self.slits.nslits})')
+                self.slits.mask[slit_idx] = self.slits.bitmask.turn_on(self.slits.mask[slit_idx], 'BADALIGNCALIB')
+                continue
+            sls = '{0:d}'.format(slit_idx)
             for bar in range(nbars):
-                if align_prof[sls][bar].SLITID != sl:
+                if align_prof[sls][bar].SLITID != slit_idx:
                     msgs.error("Alignment profiling failed to generate traces")
-                align_traces[:, bar, sl] = align_prof[sls][bar].TRACE_SPAT
+                align_traces[:, bar, slit_idx] = align_prof[sls][bar].TRACE_SPAT
         return align_traces
 
     def run(self, show=False):
