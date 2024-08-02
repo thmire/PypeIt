@@ -18,6 +18,7 @@ from pypeit.spectrographs import keck_nires
 from pypeit.spectrographs import keck_nirspec
 from pypeit.spectrographs import lbt_luci
 from pypeit.spectrographs import lbt_mods
+from pypeit.spectrographs import lco_floyds
 from pypeit.spectrographs import ldt_deveny
 from pypeit.spectrographs import magellan_fire
 from pypeit.spectrographs import magellan_mage
