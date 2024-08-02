@@ -91,7 +91,47 @@ class LCOFLOYDSSpectrograph(spectrograph.Spectrograph):
             and used to construct the :class:`~pypeit.metadata.PypeItMetaData`
             object.
         """
+        # Single setup for grism? So slitwidth will be good enough.
         return ['slitwidth']
+
+
+    def check_frame_type(self, ftype, fitstbl, exprng=None):
+        """
+        Check for frames of the provided type.
+
+        Args:
+            ftype (:obj:`str`):
+                Type of frame to check. Must be a valid frame type; see
+                frame-type :ref:`frame_type_defs`.
+            fitstbl (`astropy.table.Table`_):
+                The table with the metadata for one or more frames to check.
+            exprng (:obj:`list`, optional):
+                Range in the allowed exposure time for a frame of type
+                ``ftype``. See
+                :func:`pypeit.core.framematch.check_frame_exptime`.
+
+        Returns:
+            `numpy.ndarray`_: Boolean array with the flags selecting the
+            exposures in ``fitstbl`` that are ``ftype`` type frames.
+        """
+        good_exp = framematch.check_frame_exptime(fitstbl['exptime'], exprng)
+
+        if ftype == 'science':
+            return good_exp & (fitstbl['idname'] == 'OBJECT') 
+        if ftype == 'standard':
+            return good_exp & (fitstbl['target'] == 'STD,FLUX')
+        # Seem to lack biases, come back here.
+        #if ftype == 'bias':
+        #    return good_exp & (fitstbl['target'] == 'BIAS')
+        #if ftype == 'dark':
+        #    return good_exp & (fitstbl['target'] == 'DARK')
+        if ftype in ['pixelflat', 'trace', 'illumflat']:
+            return good_exp & ((fitstbl['idname'] == 'LAMP,FLAT') | (fitstbl['target'] == 'LAMP,TRACE'))
+        if ftype in ['arc', 'tilt']:
+            return good_exp & (fitstbl['target'] == 'LAMP,WAVE')
+
+        msgs.warn('Cannot determine if frames are of type {0}.'.format(ftype))
+        return np.zeros(len(fitstbl), dtype=bool)
 
 class LCOFLOYDSNorthSpectrograph(LCOFLOYDSSpectrograph):
     """
@@ -99,9 +139,9 @@ class LCOFLOYDSNorthSpectrograph(LCOFLOYDSSpectrograph):
     """
 
     name = 'lco_floyds_north'
-    #camera = 'XShooter_VIS'
+    #camera = 'floyds'
     supported = False
-    #comment = 'See :doc:`xshooter`'
+    #comment = 'See :doc:`lco_floyds`' # update this when needed
 
     def get_detector_par(self, det, hdu=None):
         """
@@ -123,24 +163,24 @@ class LCOFLOYDSNorthSpectrograph(LCOFLOYDSSpectrograph):
         binning = '1,1' if hdu is None else self.get_meta_value(self.get_headarr(hdu), 'binning')
 
         # Detector 1
-        # These are still X-shooter, get started!
+        # Lot of info coming from headers, should probably re-write to read headers.
         detector_dict = dict(
             binning         = binning,
             det              =1,
-            dataext         = 0,
-            specaxis        = 0,
+            dataext         = 0, # is this used?
+            specaxis        = 1,
             specflip        = False,
             spatflip        = False,
-            platescale      = 0.16, # average from order 17 and order 30, see manual
-            darkcurr        = 0.0,  # e-/pixel/hour
-            saturation      = 65535.,
-            nonlinear       = 0.86,
-            mincounts       = -1e10,
+            platescale      = 0.34, # https://lco.global/observatory/instruments/floyds/
+            darkcurr        = 0.0,  # https://lco.global/observatory/instruments/floyds/
+            saturation      = 38400., # This is in the file headers
+            nonlinear       = 0.989, # Also from the file headers
+            mincounts       = -1e10, # placeholder
             numamplifiers   = 1,
-            gain            = np.atleast_1d(0.595), # FITS format is flipped: PrimaryHDU  (2106, 4000) w/respect to Python
-            ronoise         = np.atleast_1d(3.1), # raw unbinned images are (4000,2106) (spec, spat)
-            datasec=np.atleast_1d('[:,11:2058]'),  # pre and oscan are in the spatial direction
-            oscansec=np.atleast_1d('[:,2059:2106]'),
+            gain            = np.atleast_1d(2.0), # https://lco.global/observatory/instruments/floyds/
+            ronoise         = np.atleast_1d(3.3), # https://lco.global/observatory/instruments/floyds/
+            datasec=np.atleast_1d('[1:2079,1:512]'),  # Taken from file headers
+            oscansec=np.atleast_1d('[2049:2079,1:512]'), # Taken from file headers
         )
         return detector_container.DetectorContainer(**detector_dict)
 
