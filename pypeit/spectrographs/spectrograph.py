@@ -1518,6 +1518,8 @@ class Spectrograph:
 
         # Check for rtol for config keys that are type float
         config_keys = np.array(self.configuration_keys())
+        for key in config_keys:
+            print(key)
         indx = ['rtol' not in self.meta[key].keys() if self.meta_data_model[key]['dtype'] == float
                     else False for key in config_keys]
         if np.any(indx):

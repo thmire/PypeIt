@@ -29,7 +29,7 @@ class LCOFLOYDSSpectrograph(spectrograph.Spectrograph):
     pypeline = 'Echelle'
     url = 'https://lco.global/observatory/instruments/floyds/'
     ech_fixed_format = True
-    #header_name = # ???
+    header_name = "en12"
 
     def init_meta(self):
         """
@@ -43,15 +43,16 @@ class LCOFLOYDSSpectrograph(spectrograph.Spectrograph):
         self.meta['ra'] = dict(ext=0, card="RA")
         self.meta['dec'] = dict(ext=0, card='DEC')
         self.meta['target'] = dict(ext=0, card='OBJECT')
+        self.meta['idname'] = dict(ext=0, card='OBSTYPE')
         self.meta['mjd'] = dict(ext=0, card='MJD-OBS')
         self.meta['exptime'] = dict(ext=0, card='EXPTIME')
         self.meta['airmass'] = dict(ext=0, card='AIRMASS')
         self.meta['binning'] = dict(ext=0, card=None, default='1,1') # Check if we need to implement binning
         self.meta['instrument'] = dict(ext=0, card='INSTRUME')
-        self.meta['slitwidth'] = dict(ext=0, card='APERWID')
+        self.meta['slitwid'] = dict(ext=0, card='APERWID')
+        self.meta['decker'] = dict(ext=0, card='APERWID')
+        self.meta['dispname'] = dict(ext=0, card='INSTRUME')
         
-        #self.meta['decker'] = dict(ext=0, card='SLIT') # Do I need this?
-
     def compound_meta(self, headarr, meta_key):
         """
         Methods to generate metadata requiring interpretation of the header
@@ -92,7 +93,7 @@ class LCOFLOYDSSpectrograph(spectrograph.Spectrograph):
             object.
         """
         # Single setup for grism? So slitwidth will be good enough.
-        return ['slitwidth']
+        return ['dispname',"decker"]
 
 
     def check_frame_type(self, ftype, fitstbl, exprng=None):
@@ -117,18 +118,18 @@ class LCOFLOYDSSpectrograph(spectrograph.Spectrograph):
         good_exp = framematch.check_frame_exptime(fitstbl['exptime'], exprng)
 
         if ftype == 'science':
-            return good_exp & (fitstbl['idname'] == 'OBJECT') 
+            return good_exp & (fitstbl['idname'] == 'SPECTRUM') 
         if ftype == 'standard':
             return good_exp & (fitstbl['target'] == 'STD,FLUX')
         # Seem to lack biases, come back here.
-        #if ftype == 'bias':
-        #    return good_exp & (fitstbl['target'] == 'BIAS')
-        #if ftype == 'dark':
-        #    return good_exp & (fitstbl['target'] == 'DARK')
+        if ftype == 'bias':
+            return good_exp & (fitstbl['target'] == 'BIAS')
+        if ftype == 'dark':
+            return good_exp & (fitstbl['target'] == 'DARK')
         if ftype in ['pixelflat', 'trace', 'illumflat']:
-            return good_exp & ((fitstbl['idname'] == 'LAMP,FLAT') | (fitstbl['target'] == 'LAMP,TRACE'))
+            return good_exp & ((fitstbl['idname'] == 'LAMPFLAT') | (fitstbl['target'] == 'LAMP,TRACE'))
         if ftype in ['arc', 'tilt']:
-            return good_exp & (fitstbl['target'] == 'LAMP,WAVE')
+            return good_exp & ((fitstbl['idname'] == 'ARC') | (fitstbl['target'] == 'LAMP,WAVE'))
 
         msgs.warn('Cannot determine if frames are of type {0}.'.format(ftype))
         return np.zeros(len(fitstbl), dtype=bool)
