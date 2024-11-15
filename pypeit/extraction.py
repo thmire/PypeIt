@@ -250,10 +250,10 @@ class Extract:
         if flatimages is not None:
             # This way of getting the flat image (instead of just reading flatimages.pixelflat_model) ensures that the
             # flat image is available also when an archival pixel flat is used.
-            flat_raw = flatimages.pixelflat_raw
-            if flat_raw is not None:
-                flat_norm = flatimages.pixelflat_norm
-                self.flatimg, _ = flat.flatfield(flat_raw, flat_norm)
+            flat_raw = flatimages.pixelflat_raw if flatimages.pixelflat_raw is not None else flatimages.illumflat_raw
+            if flat_raw is not None and flatimages.pixelflat_norm is not None:
+                # TODO: Can we just use flat_raw if flatimages.pixelflat_norm is None?
+                self.flatimg, _ = flat.flatfield(flat_raw, flatimages.pixelflat_norm)
         if self.flatimg is None:
             msgs.warn("No flat image was found. A spectrum of the flatfield will not be extracted!")
 
