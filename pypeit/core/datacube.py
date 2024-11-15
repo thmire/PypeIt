@@ -1309,17 +1309,18 @@ def compute_weights(raImg, decImg, waveImg, sciImg, ivarImg, slitidImg,
     #idx_max = np.unravel_index(np.argmax(whitelight_img), whitelight_img.shape)
     msgs.info("Highest S/N object located at spaxel (x, y) = {0:d}, {1:d}".format(idx_max[0], idx_max[1]))
 
-    # Generate a 2D WCS to register all frames
-    coord_min = [_ra_min, _dec_min, _wave_min]
-    coord_dlt = [dspat, dspat, dwv]
-    whitelightWCS = generate_WCS(coord_min, coord_dlt)
-    wcs_scale = (1.0 * whitelightWCS.spectral.wcs.cunit[0]).to(units.Angstrom).value  # Ensures the WCS is in Angstroms
     # Make the bin edges to be at +/- 1 pixels around the maximum (i.e. summing 9 pixels total)
     numwav = int((_wave_max - _wave_min) / dwv)
     xbins = np.array([idx_max[0]-1, idx_max[0]+2]) - 0.5
     ybins = np.array([idx_max[1]-1, idx_max[1]+2]) - 0.5
     spec_bins = np.arange(1 + numwav) - 0.5
     bins = (xbins, ybins, spec_bins)
+
+    # Generate a 2D WCS to register all frames
+    coord_min = [_ra_min, _dec_min, _wave_min]
+    coord_dlt = [dspat, dspat, dwv]
+    whitelightWCS = generate_WCS(coord_min, coord_dlt)
+    wcs_scale = (1.0 * whitelightWCS.spectral.wcs.cunit[0]).to(units.Angstrom).value  # Ensures the WCS is in Angstroms
 
     # Extract the spectrum of the highest S/N object
     flux_stack = np.zeros((numwav, numframes))
