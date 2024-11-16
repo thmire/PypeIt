@@ -800,7 +800,7 @@ class BuildWaveTilts:
             # Flag slits with high number of rejected pixels (>95%)
             # TODO: Is 95% the right threshold?
             _gpm = self.all_fit_dict[slit_idx]['pypeitFit'].bool_gpm
-            if np.sum(np.logical_not(_gpm)) > 0.95 * np.sum(_gpm):
+            if np.sum(np.logical_not(_gpm)) > 0.95 * _gpm.size:
                 msgs.warn(f'Large number of pixels rejected in the fit. This slit/order will not be reduced!')
                 self.slits.mask[slit_idx] = self.slits.bitmask.turn_on(self.slits.mask[slit_idx], 'BADTILTCALIB')
                 continue
