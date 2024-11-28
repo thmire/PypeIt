@@ -186,7 +186,161 @@ class LCOFLOYDSNorthSpectrograph(LCOFLOYDSSpectrograph):
         return detector_container.DetectorContainer(**detector_dict)
 
 
+    # All the below is copied from not_nte as of August 2nd
+    # Need to update for lco_floyds
 
+    @classmethod
+    def default_pypeit_par(cls):
+        """
+        Return the default parameters to use for this instrument.
+
+        Returns:
+            :class:`~pypeit.par.pypeitpar.PypeItPar`: Parameters required by
+            all of ``PypeIt`` methods.
+        """
+        par = super().default_pypeit_par()
+
+        # Turn off bias, illumflat, darks. Turn on overscan
+        turn_off = dict(use_illumflat=False, use_biasimage=False, use_overscan=True,
+                        use_darkimage=False)
+        par.reset_all_processimages_par(**turn_off)
+        
+        # The below is sufficient for OK edge tracing, probably not a necessary set
+        par['calibrations']['slitedges']['edge_thresh'] = 5.0
+        par['calibrations']['slitedges']['fit_order'] = 5
+        par['calibrations']['slitedges']['max_shift_adj'] = 0.5
+        par['calibrations']['slitedges']['trace_thresh'] = 10
+        par['calibrations']['slitedges']['fit_min_spec_length'] = 0.1
+        par['calibrations']['slitedges']['length_range'] = 0.3
+
+        par['calibrations']['slitedges']['det_buffer'] = 1
+        par['calibrations']['slitedges']['max_nudge'] = 1
+        #par['calibrations']['slitedges']['left_right_pca'] = False
+        #par['calibrations']['slitedges']['add_slits'] = "1:2280:35:124"
+        #par['calibrations']['slitedges']['sync_predict'] = "nearest"
+        par['calibrations']['slitedges']['smash_range'] = [0.3,0.7]
+        #par['calibrations']['slitedges']['sobel_mode'] = "constant"
+
+
+        # Start on wl calib
+        par['calibrations']['wavelengths']['lamps'] = ["HgAr_NTE_VIS"]
+        par['calibrations']['wavelengths']['sigdetect'] = 2.0
+        par['calibrations']['wavelengths']['fwhm'] = 4.0
+        par['calibrations']['wavelengths']['n_final'] = 4# [2, 4, 4, 4, 4, 4, 4, 4]
+        par['calibrations']['wavelengths']['nreid_min'] = 1 # important
+        
+        par['calibrations']['wavelengths']['reference'] = 'arc'
+        par['calibrations']['wavelengths']['reid_arxiv'] = 'not_nte_vis.fits'
+        par['calibrations']['wavelengths']['method'] = 'full_template'
+        par['calibrations']['wavelengths']['nsnippet'] = 1 # important
+
+        # Echelle parameters
+        par['calibrations']['wavelengths']['echelle'] = True
+        par['calibrations']['wavelengths']['ech_nspec_coeff'] = 5
+        par['calibrations']['wavelengths']['ech_norder_coeff'] = 5
+        par['calibrations']['wavelengths']['ech_sigrej'] = 3.0
+
+        # tilts
+        #par['calibrations']['tilts']['spat_order'] =  3
+        
+        # Flat
+        par['calibrations']['flatfield']['slit_illum_finecorr'] = False # turn off for now
+
+        # skysub
+        par['reduce']['skysub']['bspline_spacing'] = 1
+
+        # extraction
+        par['reduce']['findobj']['maxnumber_sci'] = 1
+        par['reduce']['findobj']['maxnumber_std'] = 1
+
+
+        # Sensitivity function parameters
+        par['sensfunc']['algorithm'] = 'IR'
+        #par['sensfunc']['polyorder'] = [9, 11, 11, 9, 9, 8, 8, 7, 7, 7, 7, 7, 7, 7, 7]
+        #par['sensfunc']['IR']['telgridfile'] = 'TelFit_Paranal_VIS_4900_11100_R25000.fits'
+
+        return par
+
+    @property
+    def norders(self):
+        """
+        Number of orders observed for this spectograph.
+        """
+        return 2
+
+    @property
+    def order_spat_pos(self):
+        """
+        Return the expected spatial position of each echelle order.
+        """
+
+        return np.array([0.18,0.74])
+
+        #np.array([91.470514, 378.12496]) were the positions used for lco floyds n
+        # normalised by the detector height
+
+    @property
+    def orders(self):
+        """
+        Return the order number for each echelle order.
+        """
+        return np.arange(1, 2, -1, dtype=int) # orders 1 and 2
+
+    @property
+    def spec_min_max(self):
+        """
+        Return the minimum and maximum spectral pixel expected for the
+        spectral range of each order.
+        """
+        spec_min = np.asarray([0,440])
+        spec_max = np.asarray([1750,2048])
+        return np.vstack((spec_min, spec_max))
+
+
+    def order_platescale(self, order_vec, binning=None):
+        """
+        Return the platescale for each echelle order.
+
+        This routine is only defined for echelle spectrographs, and it is
+        undefined in the base class.
+
+        Args:
+            order_vec (`numpy.ndarray`_):
+                The vector providing the order numbers.
+            binning (:obj:`str`, optional):
+                The string defining the spectral and spatial binning.
+
+        Returns:
+            `numpy.ndarray`_: An array with the platescale for each order
+            provided by ``order``.
+        """
+        # No binning, but for an instrument with binning we would do this
+        binspectral, binspatial = parse.parse_binning(binning)
+        
+        # Assume constant
+        plate_scale = np.ones(2) * 0.34
+        return plate_scale*binspatial
+
+        # Not sure about this, commenting out
+##    @property
+##    def dloglam(self):
+##        """
+##        Return the logarithmic step in wavelength for output spectra.
+##        """
+##        # This number was computed by taking the mean of the dloglam for all
+##        # the X-shooter orders. The specific loglam across the orders deviates
+##        # from this value by +-7% from this first to final order. This is the
+##        # unbinned value. It was actually measured to be 1.69207e-5 from a 2x1
+##        # data and then divided by two.
+##        return 8.46035e-06
+
+    @property
+    def loglam_minmax(self):
+        """
+        Return the base-10 logarithm of the first and last wavelength for
+        ouput spectra.
+        """
+        return np.log10(3200), np.log10(10000)
 
 
 
