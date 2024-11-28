@@ -10,9 +10,6 @@ from astropy import units
 
 #TODO: Remove 'Par' from class name?
 
-<<<<<<< HEAD
-
-=======
 
 class AATTelescopePar(TelescopePar):
     def __init__(self):
@@ -23,8 +20,6 @@ class AATTelescopePar(TelescopePar):
                                               elevation=loc.height.to(units.m).value,
                                               diameter=3.9,
                                               eff_aperture=12.0)
->>>>>>> release
-
 
 class GTCTelescopePar(TelescopePar):
     def __init__(self):
