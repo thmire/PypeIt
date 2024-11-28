@@ -651,7 +651,7 @@ def subtract_overscan(rawframe, datasec_img, oscansec_img, method='savgol', para
 
     # Amplifiers
     amps = np.unique(datasec_img[datasec_img > 0]).tolist()
-    print("number of amps: ",amps,oscansec_img.shape,datasec_img.shape,rawframe.shape)
+    
     # Perform the overscan subtraction for each amplifier
     for amp in amps:
         # Pull out the overscan data

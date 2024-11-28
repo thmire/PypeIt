@@ -180,8 +180,8 @@ class LCOFLOYDSNorthSpectrograph(LCOFLOYDSSpectrograph):
             numamplifiers   = 1,
             gain            = np.atleast_1d(2.0), # https://lco.global/observatory/instruments/floyds/
             ronoise         = np.atleast_1d(3.3), # https://lco.global/observatory/instruments/floyds/
-            datasec=np.atleast_1d('[1:2079,1:512]'),  # Taken from file headers
-            oscansec=np.atleast_1d('[2049:2079,1:512]'), # Taken from file headers
+            datasec= np.atleast_1d('[1:512,1:2048]'),  # Taken from file headers
+            oscansec= np.atleast_1d('[1:512,2049:2079]'), # Taken from file headers
         )
         return detector_container.DetectorContainer(**detector_dict)
 
@@ -202,24 +202,31 @@ class LCOFLOYDSNorthSpectrograph(LCOFLOYDSSpectrograph):
 
         # Turn off bias, illumflat, darks. Turn on overscan
         turn_off = dict(use_illumflat=False, use_biasimage=False, use_overscan=True,
-                        use_darkimage=False)
+                        use_darkimage=False,
+                        trim=True,
+                        )
         par.reset_all_processimages_par(**turn_off)
-        
-        # The below is sufficient for OK edge tracing, probably not a necessary set
-        par['calibrations']['slitedges']['edge_thresh'] = 5.0
-        par['calibrations']['slitedges']['fit_order'] = 5
+
+        # Working on this for LCO
+        par['calibrations']['slitedges']['edge_thresh'] = 20.0
+        par['calibrations']['slitedges']['fit_order'] = 3
         par['calibrations']['slitedges']['max_shift_adj'] = 0.5
         par['calibrations']['slitedges']['trace_thresh'] = 10
         par['calibrations']['slitedges']['fit_min_spec_length'] = 0.1
-        par['calibrations']['slitedges']['length_range'] = 0.3
+        par['calibrations']['slitedges']['det_min_spec_length'] = 0.1
+    
+        par['calibrations']['slitedges']['match_tol'] = 40
 
         par['calibrations']['slitedges']['det_buffer'] = 1
-        par['calibrations']['slitedges']['max_nudge'] = 1
+        par['calibrations']['slitedges']['auto_pca'] = True
         #par['calibrations']['slitedges']['left_right_pca'] = False
-        #par['calibrations']['slitedges']['add_slits'] = "1:2280:35:124"
-        #par['calibrations']['slitedges']['sync_predict'] = "nearest"
-        par['calibrations']['slitedges']['smash_range'] = [0.3,0.7]
+        #par['calibrations']['slitedges']['add_slits'] = "1:1650:365:470"
+        par['calibrations']['slitedges']['sync_predict'] = "nearest"
+        #par['calibrations']['slitedges']['smash_range'] = [0.3,0.7]
         #par['calibrations']['slitedges']['sobel_mode'] = "constant"
+        #par['calibrations']['slitedges']['bound_detector'] = True
+
+        
 
 
         # Start on wl calib
