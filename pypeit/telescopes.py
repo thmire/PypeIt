@@ -10,14 +10,20 @@ from astropy import units
 
 #TODO: Remove 'Par' from class name?
 
-class LCOFTNTelescopePar(TelescopePar):
+<<<<<<< HEAD
+
+=======
+
+class AATTelescopePar(TelescopePar):
     def __init__(self):
-        loc = EarthLocation.of_site('Haleakala Observatories')
-        super(LCOFTNTelescopePar, self).__init__(name='LCOFTN',
-                                               longitude=loc.lon.to(units.deg).value,
-                                               latitude=loc.lat.to(units.deg).value,
-                                               elevation=loc.height.to(units.m).value,
-                                               diameter=2.0)
+        loc = EarthLocation.of_site('Siding Spring Observatory')
+        super(AATTelescopePar, self).__init__(name='AAT',
+                                              longitude=loc.lon.to(units.deg).value,
+                                              latitude=loc.lat.to(units.deg).value,
+                                              elevation=loc.height.to(units.m).value,
+                                              diameter=3.9,
+                                              eff_aperture=12.0)
+>>>>>>> release
 
 
 class GTCTelescopePar(TelescopePar):
@@ -222,3 +228,12 @@ class JWSTTelescopePar(TelescopePar):
                                               latitude=0.0,
                                               elevation=0.0,
                                               diameter=6.5)
+
+class LCOFTNTelescopePar(TelescopePar):
+    def __init__(self):
+        loc = EarthLocation.of_site('Haleakala Observatories')
+        super(LCOFTNTelescopePar, self).__init__(name='LCOFTN',
+                                               longitude=loc.lon.to(units.deg).value,
+                                               latitude=loc.lat.to(units.deg).value,
+                                               elevation=loc.height.to(units.m).value,
+                                               diameter=2.0)
