@@ -201,22 +201,24 @@ class LCOFLOYDSNorthSpectrograph(LCOFLOYDSSpectrograph):
         par = super().default_pypeit_par()
 
         # Turn off bias, illumflat, darks. Turn on overscan
-        turn_off = dict(use_illumflat=False, use_biasimage=False, use_overscan=True,
+        turn_off = dict(
+                        #use_pixelflat=True,
+                        #use_illumflat=False,
+                        use_biasimage=False,
+                        use_overscan=True,
                         use_darkimage=False,
                         trim=True,
                         )
         par.reset_all_processimages_par(**turn_off)
 
-        # Working on this for LCO
+        # This works
         par['calibrations']['slitedges']['edge_thresh'] = 20.0
         par['calibrations']['slitedges']['fit_order'] = 3
         par['calibrations']['slitedges']['max_shift_adj'] = 0.5
         par['calibrations']['slitedges']['trace_thresh'] = 10
         par['calibrations']['slitedges']['fit_min_spec_length'] = 0.1
         par['calibrations']['slitedges']['det_min_spec_length'] = 0.1
-    
         par['calibrations']['slitedges']['match_tol'] = 40
-
         par['calibrations']['slitedges']['det_buffer'] = 1
         par['calibrations']['slitedges']['auto_pca'] = True
         #par['calibrations']['slitedges']['left_right_pca'] = False
@@ -226,26 +228,38 @@ class LCOFLOYDSNorthSpectrograph(LCOFLOYDSSpectrograph):
         #par['calibrations']['slitedges']['sobel_mode'] = "constant"
         #par['calibrations']['slitedges']['bound_detector'] = True
 
-        
+        # Think we need this - does not work
+        #par["calibrations"]["arcframe"]["process"]["use_pixelflat"] = True
 
-
-        # Start on wl calib
-        par['calibrations']['wavelengths']['lamps'] = ["HgAr_NTE_VIS"]
-        par['calibrations']['wavelengths']['sigdetect'] = 2.0
-        par['calibrations']['wavelengths']['fwhm'] = 4.0
-        par['calibrations']['wavelengths']['n_final'] = 4# [2, 4, 4, 4, 4, 4, 4, 4]
-        par['calibrations']['wavelengths']['nreid_min'] = 1 # important
+        # updating now.
+        par['calibrations']['wavelengths']['lamps'] = ["HgAr_LCO"]
+        par['calibrations']['wavelengths']['sigdetect'] = 5.0
+        #par['calibrations']['wavelengths']['rms_thresh_frac_fwhm'] = 0.4
+        #par['calibrations']['wavelengths']['fwhm'] = 5.0
+        par['calibrations']['wavelengths']['n_final'] = [3,2]# [2, 4, 4, 4, 4, 4, 4, 4]
+        par['calibrations']['wavelengths']['n_final'] = [5,3]# [2, 4, 4, 4, 4, 4, 4, 4]
+        #par['calibrations']['wavelengths']['nreid_min'] = 1 # important
         
         par['calibrations']['wavelengths']['reference'] = 'arc'
-        par['calibrations']['wavelengths']['reid_arxiv'] = 'not_nte_vis.fits'
+        par['calibrations']['wavelengths']['reid_arxiv'] = 'lco_floyds_north.fits'
         par['calibrations']['wavelengths']['method'] = 'full_template'
         par['calibrations']['wavelengths']['nsnippet'] = 1 # important
+        #par['calibrations']['wavelengths']['match_toler'] = 2.0
+        
+        #par['calibrations']['wavelengths']['reid_cont_sub'] = False
+
+        #par['calibrations']['wavelengths']['sigrej_first'] = 1.0
+        #par['calibrations']['wavelengths']['sigrej_final'] = 2.0
 
         # Echelle parameters
-        par['calibrations']['wavelengths']['echelle'] = True
-        par['calibrations']['wavelengths']['ech_nspec_coeff'] = 5
-        par['calibrations']['wavelengths']['ech_norder_coeff'] = 5
-        par['calibrations']['wavelengths']['ech_sigrej'] = 3.0
+        #par['calibrations']['wavelengths']['echelle'] = True
+        #par['calibrations']['wavelengths']['ech_nspec_coeff'] = 5
+        #par['calibrations']['wavelengths']['ech_norder_coeff'] = 5
+        #par['calibrations']['wavelengths']['ech_sigrej'] = 3.0
+        #par['calibrations']['wavelengths']['ech_2dfit'] = True
+        #par['calibrations']['wavelengths']['ech_sigrej'] = 3.0
+        #par['calibrations']['wavelengths']['bad_orders_maxfrac'] = 0.8
+
 
         # tilts
         #par['calibrations']['tilts']['spat_order'] =  3
@@ -291,7 +305,7 @@ class LCOFLOYDSNorthSpectrograph(LCOFLOYDSSpectrograph):
         """
         Return the order number for each echelle order.
         """
-        return np.arange(1, 2, -1, dtype=int) # orders 1 and 2
+        return np.arange(1, 3, 1, dtype=int) # orders 1 and 2
 
     @property
     def spec_min_max(self):
@@ -299,8 +313,8 @@ class LCOFLOYDSNorthSpectrograph(LCOFLOYDSSpectrograph):
         Return the minimum and maximum spectral pixel expected for the
         spectral range of each order.
         """
-        spec_min = np.asarray([0,440])
-        spec_max = np.asarray([1750,2048])
+        spec_min = np.asarray([0,300])
+        spec_max = np.asarray([2048,2048])
         return np.vstack((spec_min, spec_max))
 
 
