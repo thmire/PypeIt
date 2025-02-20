@@ -1,14 +1,17 @@
 # Creation Date: 2024-Nov-28
 # Lines chosen by X-reffing the Pypeit line lists with the plot from Valenti, Sand, and Howell
+# I then added a few more Ar lines in the 4050-4350 region
 # https://www.authorea.com/users/598/articles/6566/_show_article
 | ion |     wave   | NIST | Instr | amplitude |            Source          |
 | HgI |  3651.1980 |    1 |     6 |      7408 | lrisb_600_4000_PYPIT.json  |
 | HgI |  4047.7080 |    1 |     6 |     12902 | lrisb_600_4000_PYPIT.json  |
 | HgI |  4078.9880 |    1 |     6 |       884 | lrisb_600_4000_PYPIT.json  |
+#| ArI |  4159.7620 |    1 |    64 |        94 |  GMOS_R400_blue_1_fit.json |
+#| ArI |  4201.8580 |    1 |   128 |     10000 |                       NIST |
 | HgI |  4359.5600 |    1 |     6 |     38125 | lrisb_600_4000_PYPIT.json  |
 | HgI |  5462.2680 |    1 |    15 |     28377 | lrisb_600_4000_PYPIT.json  |
 | HgI |  5771.2100 |    1 |     9 |      5510 | lrisr_600_7500_PYPIT.json  |
-| HgI |  5792.2760 |    1 |     9 |      6029 | lrisr_600_7500_PYPIT.json  |
+| HgI |  5792.2760 |    1 |     9 |      6029 | lrisr_600_7500_PYPIT.json  |f+
 | ArI |  6033.7970 |    1 |   128 |     10000 |                       NIST |
 | ArI |  6754.6980 |    1 |    72 |       478 | GMOS_R400_blue_38_fit.json |
 | ArI |  6873.1850 |    1 |    72 |       514 | GMOS_R400_blue_38_fit.json |
@@ -39,9 +42,7 @@
 #| HgI |  3664.3270 |    1 |     2 |      1042 | lrisb_600_4000_PYPIT.json |
 #| HgI |  10142.53  |    1 |     9 |      6000 |        NIST               |
 #| ArI |  3950.0970 |    1 |   128 |     10000 |                       NIST |
-#| ArI |  4159.7620 |    1 |    64 |        94 |  GMOS_R400_blue_1_fit.json |
 #| ArI |  4165.3540 |    1 |   128 |     10000 |                       NIST |
-#| ArI |  4201.8580 |    1 |   128 |     10000 |                       NIST |
 #| ArI |  4260.5610 |    1 |   128 |     10000 |                       NIST |
 #| ArI |  4301.3110 |    1 |   128 |     10000 |                       NIST |
 #| ArI |  4334.7790 |    1 |    64 |        91 |  GMOS_R400_blue_1_fit.json |

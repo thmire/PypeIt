@@ -262,7 +262,9 @@ class Identify(scriptbase.ScriptBase):
 
             if not np.any(wv_calib.wv_fits):
                 wv_calib.wv_fits = np.array(wv_fits_arr)
-                #wv_calib.to_file()
+                wv_calib.calib_key = "A_0_DET01"
+                print(wv_calib.strpar)
+                wv_calib.to_file()
             if not args.new_sol:
                 wv_calib.wv_fit2d=None
             if args.new_sol:
@@ -270,6 +272,22 @@ class Identify(scriptbase.ScriptBase):
 
             # convert specdata into an array, since it's currently a list
             specdata_multi = np.array(specdata_multi)
+            
+        # TODO: Make the following more elegant:
+        # fill lines with dummy values to make this work
+        # Ask the user if they wish to store the result in PypeIt calibrations                
+            arcfitter.store_solution(final_fit, slits.binspec,
+                                wvcalib=wv_calib,
+                                rmstol=args.rmstol,
+                                force_save=args.force_save, 
+                                multi = args.multi, fits_dicts = fits_dicts,
+                                specdata_multi = specdata_multi,
+                                slits = slits,
+                                lines_pix_arr = lines_pix_arr,
+                                lines_wav_arr = lines_wav_arr,
+                                lines_fit_ord = np.array(lines_fit_ord),
+                                custom_wav = np.array(custom_wav),
+                                custom_wav_ind = np.array(custom_wav_ind) )
 
         # If we just want the normal one-trace output
         else:
@@ -316,22 +334,21 @@ class Identify(scriptbase.ScriptBase):
             lines_wav_arr = None
             lines_fit_ord = None 
             custom_wav = None 
-            custom_wav_ind = None 
+            custom_wav_ind = None
+            
         # TODO: Make the following more elegant:
         # fill lines with dummy values to make this work
         # Ask the user if they wish to store the result in PypeIt calibrations
-        arcfitter.store_solution(final_fit, slits.binspec,
-                                wvcalib=wv_calib,
-                                rmstol=args.rmstol,
-                                force_save=args.force_save, 
-                                multi = args.multi, fits_dicts = fits_dicts,
-                                specdata_multi = specdata_multi,
-                                slits = slits,
-                                lines_pix_arr = lines_pix_arr,
-                                lines_wav_arr = lines_wav_arr,
-                                lines_fit_ord = np.array(lines_fit_ord),
-                                custom_wav = np.array(custom_wav),
-                                custom_wav_ind = np.array(custom_wav_ind) )
+            print(waveCalib)
+            arcfitter.store_solution(final_fit, slits.binspec,
+                                 wvcalib=waveCalib,
+                                 rmstol=args.rmstol,
+                                 force_save=args.force_save)
+
+
+            
+
+
             
 
 

@@ -232,3 +232,13 @@ class LCOFTNTelescopePar(TelescopePar):
                                                latitude=loc.lat.to(units.deg).value,
                                                elevation=loc.height.to(units.m).value,
                                                diameter=2.0)
+                                               
+class LCOFTSTelescopePar(TelescopePar):
+    def __init__(self):
+        loc = EarthLocation.of_site('Siding Spring Observatory')
+        super(LCOFTSTelescopePar, self).__init__(name='LCOFTS',
+                                               longitude=loc.lon.to(units.deg).value,
+                                               latitude=loc.lat.to(units.deg).value,
+                                               elevation=loc.height.to(units.m).value,
+                                               diameter=2.0)
+                                               

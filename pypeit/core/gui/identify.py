@@ -783,27 +783,30 @@ class Identify:
             if ans == 'y':
                 # Arxiv solution
                 # prompt the user to give the orders that were used here
-                if wvcalib is not None and '"echelle": true' in wvcalib.strpar:
-                    while True:
-                        try:
-                            print('')
-                            order_str = input("Which orders were we fitting? e.g. (32:39):  ")    
-                            order_vec = np.arange(int(order_str[1:3]), int(order_str[4:6])+1)
-                            if len(order_vec) != len(wvcalib.wv_fits):
-                                msgs.warn(f'The number of orders in this list, {order_vec} '+msgs.newline()+
-                                f'does not match the number of traces: {len(wvcalib.wv_fits)}' + msgs.newline() +
-                                'Please try again...')
+                try :
+                    if wvcalib is not None and '"echelle": true' in wvcalib.strpar:
+                        while True:
+                            try:
+                                print('')
+                                order_str = input("Which orders were we fitting? e.g. (32:39):  ")    
+                                order_vec = np.arange(int(order_str[1:3]), int(order_str[4:6])+1)
+                                if len(order_vec) != len(wvcalib.wv_fits):
+                                    msgs.warn(f'The number of orders in this list, {order_vec} '+msgs.newline()+
+                                    f'does not match the number of traces: {len(wvcalib.wv_fits)}' + msgs.newline() +
+                                    'Please try again...')
+                                    continue
+                            except ValueError:
+                                msgs.warn("Sorry, syntax may be invalid...")
+                                #better try again... Return to the start of the loop
                                 continue
-                        except ValueError:
-                            msgs.warn("Sorry, syntax may be invalid...")
-                            #better try again... Return to the start of the loop
-                            continue
-                        else:
-                            #orders were successfully parsed!
-                            #we're ready to exit the loop.
-                            break
-                else: 
-                    order_vec = None
+                            else:
+                                #orders were successfully parsed!
+                                #we're ready to exit the loop.
+                                break
+                    else: 
+                        order_vec = None
+                except :
+                    pass
                 make_arxiv = ''
                 if not force_save:
                     while make_arxiv != 'y' and make_arxiv != 'n':
