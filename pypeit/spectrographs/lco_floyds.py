@@ -214,10 +214,13 @@ class LCOFLOYDSNorthSpectrograph(LCOFLOYDSSpectrograph):
 
         # turn off the fine Correction to the Spatial Illumination
 
+        # The tweak is messing up the edges
+        par['calibrations']['flatfield']['tweak_slits'] = False
+
         
         # This works
         par['calibrations']['slitedges']['edge_thresh'] = 30.0
-        par['calibrations']['slitedges']['fit_order'] = 4
+        par['calibrations']['slitedges']['fit_order'] = 10
         par['calibrations']['slitedges']['max_shift_adj'] = 0.5
         par['calibrations']['slitedges']['trace_thresh'] = 10
         par['calibrations']['slitedges']['fit_min_spec_length'] = 0.1
@@ -283,6 +286,7 @@ class LCOFLOYDSNorthSpectrograph(LCOFLOYDSSpectrograph):
         par['reduce']['findobj']['find_fwhm'] = 10        
         par['reduce']['findobj']['maxnumber_sci'] = 1
         par['reduce']['findobj']['maxnumber_std'] = 1
+        par['reduce']['findobj']['trace_npoly'] = 10
 
         par['reduce']['extraction']['use_2dmodel_mask'] = False
 
