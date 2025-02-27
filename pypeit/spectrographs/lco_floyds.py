@@ -202,8 +202,8 @@ class LCOFLOYDSNorthSpectrograph(LCOFLOYDSSpectrograph):
 
         # Turn off bias, illumflat, darks. Turn on overscan
         turn_off = dict(
-                        #use_pixelflat=True,
-                        #use_illumflat=False,
+                        use_pixelflat=False,
+                        use_illumflat=False,
                         use_biasimage=False,
                         use_overscan=True,
                         use_darkimage=False,
@@ -238,17 +238,17 @@ class LCOFLOYDSNorthSpectrograph(LCOFLOYDSSpectrograph):
 
         # This works if Echelle == False..
         par['calibrations']['wavelengths']['lamps'] = ["HgAr_LCO"]
-        par['calibrations']['wavelengths']['sigdetect'] = 5.0
+        par['calibrations']['wavelengths']['sigdetect'] = 4.0
         #par['calibrations']['wavelengths']['rms_thresh_frac_fwhm'] = 0.4
         #par['calibrations']['wavelengths']['fwhm'] = 5.0
         par['calibrations']['wavelengths']['func'] = "chebyshev"
-        par['calibrations']['wavelengths']['n_first'] = 2  
-        par['calibrations']['wavelengths']['n_final'] = [5,3] 
+        par['calibrations']['wavelengths']['n_first'] = 2 
+        par['calibrations']['wavelengths']['n_final'] = [4,4] 
         #par['calibrations']['wavelengths']['nreid_min'] = 1 
         
         par['calibrations']['wavelengths']['reference'] = 'arc'
-        par['calibrations']['wavelengths']['reid_arxiv'] = 'lco_floyds_north.fits'
-        par['calibrations']['wavelengths']['method'] = 'full_template'
+        par['calibrations']['wavelengths']['reid_arxiv'] = 'lco_wvcalib_echelle.fits'
+        par['calibrations']['wavelengths']['method'] = 'reidentify'
         par['calibrations']['wavelengths']['nsnippet'] = 1 # important
         par['calibrations']['wavelengths']['match_toler'] = 5.0
 
@@ -257,12 +257,14 @@ class LCOFLOYDSNorthSpectrograph(LCOFLOYDSSpectrograph):
         #par['calibrations']['wavelengths']['reid_cont_sub'] = False
 
         # Echelle parameters
-        par['calibrations']['wavelengths']['echelle'] = False #True
-        #par['calibrations']['wavelengths']['ech_nspec_coeff'] = 5
-        #par['calibrations']['wavelengths']['ech_norder_coeff'] = 5
-        #par['calibrations']['wavelengths']['ech_sigrej'] = 3.0
-        #par['calibrations']['wavelengths']['ech_2dfit'] = True
-        #par['calibrations']['wavelengths']['ech_sigrej'] = 3.0
+        par['calibrations']['wavelengths']['echelle'] = True
+        par['calibrations']['wavelengths']['ech_nspec_coeff'] = 4
+        par['calibrations']['wavelengths']['ech_norder_coeff'] = 4
+        par['calibrations']['wavelengths']['ech_sigrej'] = 3.0
+        par['calibrations']['wavelengths']['ech_2dfit'] = True
+        par['calibrations']['wavelengths']['ech_sigrej'] = 3.0
+        par['calibrations']['wavelengths']['echelle_pad'] = 1
+
         #par['calibrations']['wavelengths']['bad_orders_maxfrac'] = 0.8
 
 
