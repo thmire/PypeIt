@@ -10,8 +10,8 @@
 #| ArI |  4201.8580 |    1 |   128 |     10000 |                       NIST |
 | HgI |  4359.5600 |    1 |     6 |     38125 | lrisb_600_4000_PYPIT.json  |
 | HgI |  5462.2680 |    1 |    15 |     28377 | lrisb_600_4000_PYPIT.json  |
-| HgI |  5771.2100 |    1 |     9 |      5510 | lrisr_600_7500_PYPIT.json  |
-| HgI |  5792.2760 |    1 |     9 |      6029 | lrisr_600_7500_PYPIT.json  |f+
+#| HgI |  5771.2100 |    1 |     9 |      5510 | lrisr_600_7500_PYPIT.json  |
+#| HgI |  5792.2760 |    1 |     9 |      6029 | lrisr_600_7500_PYPIT.json  |f+
 | ArI |  6033.7970 |    1 |   128 |     10000 |                       NIST |
 | ArI |  6754.6980 |    1 |    72 |       478 | GMOS_R400_blue_38_fit.json |
 | ArI |  6873.1850 |    1 |    72 |       514 | GMOS_R400_blue_38_fit.json |
@@ -35,6 +35,7 @@
 | ArI |  9356.7870 |    1 |    89 |      3521 |  lrisr_400_8500_PYPIT.json |
 | ArI |  9660.4350 |    1 |    72 |     35000 |   deimos_830g_r_PYPIT.json |
 | ArI |  9787.1860 |    1 |    25 |      8197 |  lrisr_400_8500_PYPIT.json |
+| HgI |  10142.53  |    1 |     9 |      6000 |        NIST               |
 | ArI | 10472.9230 |    1 |    72 |      1600 |  deimos_830g_pypeit_manual |
 #| HgI |  2968.1495 |    1 |     0 |      3000 | ldt_deveny_300_HgCdAr.fits |
 #| HgI |  3022.384  |    1 |     0 |      1200 | ldt_deveny_300_HgCdAr.fits |
