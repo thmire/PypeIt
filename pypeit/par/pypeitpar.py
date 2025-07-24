@@ -644,11 +644,13 @@ class FlatFieldPar(ParSet):
                              'minimum scale on which the illumination function will have features.'
 
         defaults['pixelflat_min_wave'] = None
-        dtypes['pixelflat_min_wave'] = [int, float]
-        descr['pixelflat_min_wave'] = 'All values of the normalized pixel flat are set to 1 for wavelengths below this value.'
+        dtypes['pixelflat_min_wave'] = [int, float, list]
+        descr['pixelflat_min_wave'] = 'All values of the normalized pixel flat are set to 1 for wavelengths below this value.'\
+                                    ' TMR: I have made a list possible and use it for the LCO spectrograph. This will break other'\
+                                    ' functionality.'
 
         defaults['pixelflat_max_wave'] = None
-        dtypes['pixelflat_max_wave'] = [int, float]
+        dtypes['pixelflat_max_wave'] = [int, float, list]
         descr['pixelflat_max_wave'] = 'All values of the normalized pixel flat are set to 1 for wavelengths above this value.'
 
 

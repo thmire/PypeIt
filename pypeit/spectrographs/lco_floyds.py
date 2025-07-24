@@ -24,11 +24,10 @@ class LCOFLOYDSSpectrograph(spectrograph.Spectrograph):
     Child to handle LCO/FLOYDS specific code
     """
     ndet = 1
-    # This is north telescope, should implement the south 2m at some point
-    telescope = telescopes.LCOFTNTelescopePar() 
     pypeline = 'Echelle'
     url = 'https://lco.global/observatory/instruments/floyds/'
     ech_fixed_format = True
+    telescope = telescopes.LCOFTNTelescopePar()
 
     def init_meta(self):
         """
@@ -137,14 +136,269 @@ class LCOFLOYDSSpectrograph(spectrograph.Spectrograph):
 
 class LCOFLOYDSNorthSpectrograph(LCOFLOYDSSpectrograph):
     """
-    Child to handle VLT/XSHOOTER specific code
+    Child to handle North specific code
     """
 
     name = 'lco_floyds_north'
     #camera = 'floyds'
     supported = False
     #comment = 'See :doc:`lco_floyds`' # update this when needed
+    header_name = "en06"
+    telescope = telescopes.LCOFTNTelescopePar()
+
+    def get_detector_par(self, det, hdu=None):
+        """
+        Return metadata for the selected detector.
+
+        Args:
+            det (:obj:`int`):
+                1-indexed detector number.
+            hdu (`astropy.io.fits.HDUList`_, optional):
+                The open fits file with the raw image of interest.  If not
+                provided, frame-dependent parameters are set to a default.
+
+        Returns:
+            :class:`~pypeit.images.detector_container.DetectorContainer`:
+            Object with the detector metadata.
+        """
+        # Binning
+        # TODO: Could this be detector dependent??
+        binning = '1,1' if hdu is None else self.get_meta_value(self.get_headarr(hdu), 'binning')
+
+        # Detector 1
+        # Lot of info coming from headers, should probably re-write to read headers.
+        detector_dict = dict(
+            binning         = binning,
+            det              =1,
+            dataext         = 0, # is this used?
+            specaxis        = 1,
+            specflip        = False,
+            spatflip        = False,
+            platescale      = 0.34, # https://lco.global/observatory/instruments/floyds/
+            darkcurr        = 0.0,  # https://lco.global/observatory/instruments/floyds/
+            saturation      = 38400., # This is in the file headers
+            nonlinear       = 0.989, # Also from the file headers
+            mincounts       = -1e10, # placeholder
+            numamplifiers   = 1,
+            gain            = np.atleast_1d(2.0), # https://lco.global/observatory/instruments/floyds/
+            ronoise         = np.atleast_1d(3.3), # https://lco.global/observatory/instruments/floyds/
+            datasec= np.atleast_1d('[1:512,1:2048]'),  # Taken from file headers
+            oscansec= np.atleast_1d('[1:512,2049:2079]'), # Taken from file headers
+        )
+        return detector_container.DetectorContainer(**detector_dict)
+
+
+
+    @classmethod
+    def default_pypeit_par(cls):
+        """
+        Return the default parameters to use for this instrument.
+
+        Returns:
+            :class:`~pypeit.par.pypeitpar.PypeItPar`: Parameters required by
+            all of ``PypeIt`` methods.
+        """
+        par = super().default_pypeit_par()
+
+        # Turn off bias, illumflat, darks. Turn on overscan
+        turn_off = dict(
+                        use_pixelflat=False,
+                        use_illumflat=False,
+                        use_biasimage=False,
+                        use_overscan=True,
+                        use_darkimage=False,
+                        trim=True,
+                        )
+        par.reset_all_processimages_par(**turn_off)
+
+        #turn off overscan, because there is not one on the skyframe
+        par['calibrations']["traceframe"]["process"]["use_overscan"] =False
+        
+        par['calibrations']["standardframe"]["process"]["use_pixelflat"]= True # This
+        par["scienceframe"]["process"]["use_pixelflat"]= True # This
+        par["scienceframe"]["process"]["use_illumflat"]= False # This won't work for the blue order.
+
+        # The tweak is messing up the edges
+        par['calibrations']['flatfield']['tweak_slits'] = False
+        par['calibrations']['flatfield']['pixelflat_min_wave'] = [4540.0,4650.0]
+
+        # This works
+        par['calibrations']['slitedges']['edge_thresh'] = 30.0
+        par['calibrations']['slitedges']['fit_order'] = 10
+        par['calibrations']['slitedges']['max_shift_adj'] = 0.5
+        par['calibrations']['slitedges']['trace_thresh'] = 10
+        par['calibrations']['slitedges']['fit_min_spec_length'] = 0.1
+        par['calibrations']['slitedges']['det_min_spec_length'] = 0.1
+        par['calibrations']['slitedges']['match_tol'] = 40
+        par['calibrations']['slitedges']['det_buffer'] = 1
+        par['calibrations']['slitedges']['auto_pca'] = True
+        par['calibrations']['slitedges']['left_right_pca'] = True
+        #par['calibrations']['slitedges']['add_slits'] = "1:1650:365:470"
+        par['calibrations']['slitedges']['sync_predict'] = "nearest" # try pca?
+        #par['calibrations']['slitedges']['smash_range'] = [0.3,0.7]
+        #par['calibrations']['slitedges']['sobel_mode'] = "constant"
+        #par['calibrations']['slitedges']['fit_function'] = "polynomial"
+
+
+        par['calibrations']['wavelengths']['lamps'] = ["HgAr_LCO"]
+        par['calibrations']['wavelengths']['sigdetect'] = 4.0
+        par['calibrations']['wavelengths']['rms_thresh_frac_fwhm'] = 0.15
+        #par['calibrations']['wavelengths']['fwhm'] = 6.0
+        par['calibrations']['wavelengths']["fwhm_fromlines"] = True
+        par['calibrations']['wavelengths']['func'] = "chebyshev"
+        par['calibrations']['wavelengths']['n_first'] = 2 
+        par['calibrations']['wavelengths']['n_final'] = [4,4] 
+        #par['calibrations']['wavelengths']['nreid_min'] = 1 
+        
+        par['calibrations']['wavelengths']['reference'] = 'arc'
+        par['calibrations']['wavelengths']['reid_arxiv'] = 'lco_wvcalib_echelle.fits'
+        par['calibrations']['wavelengths']['method'] = 'reidentify'
+        par['calibrations']['wavelengths']['nsnippet'] = 1 # important
+        par['calibrations']['wavelengths']['match_toler'] = 5.0
+
+        #par["flexure"]["spec_method"] = "boxcar"
+        
+        #par['calibrations']['wavelengths']['reid_cont_sub'] = False
+
+        # Echelle parameters
+        par['calibrations']['wavelengths']['echelle'] = True
+        par['calibrations']['wavelengths']['ech_nspec_coeff'] = 4
+        par['calibrations']['wavelengths']['ech_norder_coeff'] = 4
+        par['calibrations']['wavelengths']['ech_sigrej'] = 3.0
+        par['calibrations']['wavelengths']['ech_2dfit'] = True
+        par['calibrations']['wavelengths']['ech_sigrej'] = 3.0
+        par['calibrations']['wavelengths']['echelle_pad'] = 1
+
+        #par['calibrations']['wavelengths']['bad_orders_maxfrac'] = 0.8
+
+
+        # tilts
+        #par['calibrations']['tilts']['spat_order'] =  3
+        
+        # Flat
+        par['calibrations']['flatfield']['slit_illum_finecorr'] = False # turn off for now
+
+        # skysub
+        par['reduce']['skysub']['no_local_sky'] = False
+        par['reduce']['skysub']['global_sky_std'] = True
+        par['reduce']['skysub']['local_maskwidth'] = 5.0
+
+        #par['reduce']['skysub']['bspline_spacing'] = 1
+
+        # extraction
+        #par['reduce']['findobj']['find_maxdev'] = 10        
+        #par['reduce']['findobj']['find_min_max'] = [480,2050]  
+
+        par['reduce']['findobj']['find_fwhm'] = 5
+        par['reduce']['findobj']['maxnumber_sci'] = 1
+        par['reduce']['findobj']['maxnumber_std'] = 1
+        par['reduce']['findobj']['trace_npoly'] = 15 # important to trace the bendy trace properly
+
+        #par['reduce']['extraction']['use_2dmodel_mask'] = False
+
+
+        # Sensitivity function parameters
+        par['sensfunc']['algorithm'] = 'UVIS'
+        #par['sensfunc']['polyorder'] = [9, 11, 11, 9, 9, 8, 8, 7, 7, 7, 7, 7, 7, 7, 7]
+        #par['sensfunc']['IR']['telgridfile'] = 'TelFit_Paranal_VIS_4900_11100_R25000.fits'
+
+        #par["reduce"]["skysub"]["global_sky_std"] = False
+
+        return par
+
+    @property
+    def norders(self):
+        """
+        Number of orders observed for this spectograph.
+        """
+        return 2
+
+    @property
+    def order_spat_pos(self):
+        """
+        Return the expected spatial position of each echelle order.
+        """
+
+        return np.array([0.27,0.73])
+
+        #np.array([138, 376]) were the positions used for lco floyds n
+        # normalised by the detector height
+
+    @property
+    def orders(self):
+        """
+        Return the order number for each echelle order.
+        """
+        return np.arange(1, 3, 1, dtype=int) # orders 1 and 2
+
+    @property
+    def spec_min_max(self):
+        """
+        Return the minimum and maximum spectral pixel expected for the
+        spectral range of each order.
+        """
+        spec_min = np.asarray([0,300])
+        spec_max = np.asarray([2048,2048])
+        return np.vstack((spec_min, spec_max))
+
+
+    def order_platescale(self, order_vec, binning=None):
+        """
+        Return the platescale for each echelle order.
+
+        This routine is only defined for echelle spectrographs, and it is
+        undefined in the base class.
+
+        Args:
+            order_vec (`numpy.ndarray`_):
+                The vector providing the order numbers.
+            binning (:obj:`str`, optional):
+                The string defining the spectral and spatial binning.
+
+        Returns:
+            `numpy.ndarray`_: An array with the platescale for each order
+            provided by ``order``.
+        """
+        # No binning, but for an instrument with binning we would do this
+        binspectral, binspatial = parse.parse_binning(binning)
+        
+        # Assume constant
+        plate_scale = np.ones(2) * 0.34
+        return plate_scale*binspatial
+
+        # Not sure about this, commenting out
+##    @property
+##    def dloglam(self):
+##        """
+##        Return the logarithmic step in wavelength for output spectra.
+##        """
+##        # This number was computed by taking the mean of the dloglam for all
+##        # the X-shooter orders. The specific loglam across the orders deviates
+##        # from this value by +-7% from this first to final order. This is the
+##        # unbinned value. It was actually measured to be 1.69207e-5 from a 2x1
+##        # data and then divided by two.
+##        return 8.46035e-06
+
+    @property
+    def loglam_minmax(self):
+        """
+        Return the base-10 logarithm of the first and last wavelength for
+        ouput spectra.
+        """
+        return np.log10(3200), np.log10(10000)
+
+class LCOFLOYDSSouthSpectrograph(LCOFLOYDSSpectrograph):
+    """
+    Child to handle South specific code
+    """
+
+    name = 'lco_floyds_south'
+    #camera = 'floyds'
+    supported = False
+    #comment = 'See :doc:`lco_floyds`' # update this when needed
     header_name = "en12"
+    #lacking an extinction file, breaks the flux calib. Add one later
+    #telescope = telescopes.LCOFTSTelescopePar()
 
     def get_detector_par(self, det, hdu=None):
         """
@@ -214,255 +468,14 @@ class LCOFLOYDSNorthSpectrograph(LCOFLOYDSSpectrograph):
 
         # turn off the fine Correction to the Spatial Illumination
 
-        # The tweak is messing up the edges
-        par['calibrations']['flatfield']['tweak_slits'] = False
-
-        
-        # This works
-        par['calibrations']['slitedges']['edge_thresh'] = 30.0
-        par['calibrations']['slitedges']['fit_order'] = 10
-        par['calibrations']['slitedges']['max_shift_adj'] = 0.5
-        par['calibrations']['slitedges']['trace_thresh'] = 10
-        par['calibrations']['slitedges']['fit_min_spec_length'] = 0.1
-        par['calibrations']['slitedges']['det_min_spec_length'] = 0.1
-        par['calibrations']['slitedges']['match_tol'] = 40
-        par['calibrations']['slitedges']['det_buffer'] = 1
-        par['calibrations']['slitedges']['auto_pca'] = True
-        par['calibrations']['slitedges']['left_right_pca'] = True
-        #par['calibrations']['slitedges']['add_slits'] = "1:1650:365:470"
-        par['calibrations']['slitedges']['sync_predict'] = "nearest" # try pca?
-        #par['calibrations']['slitedges']['smash_range'] = [0.3,0.7]
-        #par['calibrations']['slitedges']['sobel_mode'] = "constant"
-        #par['calibrations']['slitedges']['fit_function'] = "polynomial"
-
-
-        # This works if Echelle == False..
-        par['calibrations']['wavelengths']['lamps'] = ["HgAr_LCO"]
-        par['calibrations']['wavelengths']['sigdetect'] = 4.0
-        #par['calibrations']['wavelengths']['rms_thresh_frac_fwhm'] = 0.4
-        #par['calibrations']['wavelengths']['fwhm'] = 5.0
-        par['calibrations']['wavelengths']['func'] = "chebyshev"
-        par['calibrations']['wavelengths']['n_first'] = 2 
-        par['calibrations']['wavelengths']['n_final'] = [4,4] 
-        #par['calibrations']['wavelengths']['nreid_min'] = 1 
-        
-        par['calibrations']['wavelengths']['reference'] = 'arc'
-        par['calibrations']['wavelengths']['reid_arxiv'] = 'lco_wvcalib_echelle.fits'
-        par['calibrations']['wavelengths']['method'] = 'reidentify'
-        par['calibrations']['wavelengths']['nsnippet'] = 1 # important
-        par['calibrations']['wavelengths']['match_toler'] = 5.0
-
-        #par["flexure"]["spec_method"] = "boxcar"
-        
-        #par['calibrations']['wavelengths']['reid_cont_sub'] = False
-
-        # Echelle parameters
-        par['calibrations']['wavelengths']['echelle'] = True
-        par['calibrations']['wavelengths']['ech_nspec_coeff'] = 4
-        par['calibrations']['wavelengths']['ech_norder_coeff'] = 4
-        par['calibrations']['wavelengths']['ech_sigrej'] = 3.0
-        par['calibrations']['wavelengths']['ech_2dfit'] = True
-        par['calibrations']['wavelengths']['ech_sigrej'] = 3.0
-        par['calibrations']['wavelengths']['echelle_pad'] = 1
-
-        #par['calibrations']['wavelengths']['bad_orders_maxfrac'] = 0.8
-
-
-        # tilts
-        #par['calibrations']['tilts']['spat_order'] =  3
-        
-        # Flat
-        par['calibrations']['flatfield']['slit_illum_finecorr'] = True # turn off for now
-
-        # skysub
-        par['reduce']['skysub']['no_local_sky'] = False
-        par['reduce']['skysub']['global_sky_std'] = True
-        par['reduce']['skysub']['local_maskwidth'] = 5.0
-
-        #par['reduce']['skysub']['bspline_spacing'] = 1
-
-        # extraction
-        #par['reduce']['findobj']['find_maxdev'] = 10        
-        #par['reduce']['findobj']['find_min_max'] = [480,2050]  
-
-        par['reduce']['findobj']['find_fwhm'] = 10        
-        par['reduce']['findobj']['maxnumber_sci'] = 1
-        par['reduce']['findobj']['maxnumber_std'] = 1
-        par['reduce']['findobj']['trace_npoly'] = 10
-
-        par['reduce']['extraction']['use_2dmodel_mask'] = False
-
-
-        # Sensitivity function parameters
-        par['sensfunc']['algorithm'] = 'IR'
-        #par['sensfunc']['polyorder'] = [9, 11, 11, 9, 9, 8, 8, 7, 7, 7, 7, 7, 7, 7, 7]
-        #par['sensfunc']['IR']['telgridfile'] = 'TelFit_Paranal_VIS_4900_11100_R25000.fits'
-
-        return par
-
-    @property
-    def norders(self):
-        """
-        Number of orders observed for this spectograph.
-        """
-        return 2
-
-    @property
-    def order_spat_pos(self):
-        """
-        Return the expected spatial position of each echelle order.
-        """
-
-        return np.array([0.18,0.74])
-
-        #np.array([91.470514, 378.12496]) were the positions used for lco floyds n
-        # normalised by the detector height
-
-    @property
-    def orders(self):
-        """
-        Return the order number for each echelle order.
-        """
-        return np.arange(1, 3, 1, dtype=int) # orders 1 and 2
-
-    @property
-    def spec_min_max(self):
-        """
-        Return the minimum and maximum spectral pixel expected for the
-        spectral range of each order.
-        """
-        spec_min = np.asarray([0,300])
-        spec_max = np.asarray([2048,2048])
-        return np.vstack((spec_min, spec_max))
-
-
-    def order_platescale(self, order_vec, binning=None):
-        """
-        Return the platescale for each echelle order.
-
-        This routine is only defined for echelle spectrographs, and it is
-        undefined in the base class.
-
-        Args:
-            order_vec (`numpy.ndarray`_):
-                The vector providing the order numbers.
-            binning (:obj:`str`, optional):
-                The string defining the spectral and spatial binning.
-
-        Returns:
-            `numpy.ndarray`_: An array with the platescale for each order
-            provided by ``order``.
-        """
-        # No binning, but for an instrument with binning we would do this
-        binspectral, binspatial = parse.parse_binning(binning)
-        
-        # Assume constant
-        plate_scale = np.ones(2) * 0.34
-        return plate_scale*binspatial
-
-        # Not sure about this, commenting out
-##    @property
-##    def dloglam(self):
-##        """
-##        Return the logarithmic step in wavelength for output spectra.
-##        """
-##        # This number was computed by taking the mean of the dloglam for all
-##        # the X-shooter orders. The specific loglam across the orders deviates
-##        # from this value by +-7% from this first to final order. This is the
-##        # unbinned value. It was actually measured to be 1.69207e-5 from a 2x1
-##        # data and then divided by two.
-##        return 8.46035e-06
-
-    @property
-    def loglam_minmax(self):
-        """
-        Return the base-10 logarithm of the first and last wavelength for
-        ouput spectra.
-        """
-        return np.log10(3200), np.log10(10000)
-
-class LCOFLOYDSSouthSpectrograph(LCOFLOYDSSpectrograph):
-    """
-    Child to handle VLT/XSHOOTER specific code
-    """
-
-    name = 'lco_floyds_south'
-    #camera = 'floyds'
-    supported = False
-    #comment = 'See :doc:`lco_floyds`' # update this when needed
-    header_name = "en06"
-
-    def get_detector_par(self, det, hdu=None):
-        """
-        Return metadata for the selected detector.
-
-        Args:
-            det (:obj:`int`):
-                1-indexed detector number.
-            hdu (`astropy.io.fits.HDUList`_, optional):
-                The open fits file with the raw image of interest.  If not
-                provided, frame-dependent parameters are set to a default.
-
-        Returns:
-            :class:`~pypeit.images.detector_container.DetectorContainer`:
-            Object with the detector metadata.
-        """
-        # Binning
-        # TODO: Could this be detector dependent??
-        binning = '1,1' if hdu is None else self.get_meta_value(self.get_headarr(hdu), 'binning')
-
-        # Detector 1
-        # Lot of info coming from headers, should probably re-write to read headers.
-        detector_dict = dict(
-            binning         = binning,
-            det              =1,
-            dataext         = 0, # is this used?
-            specaxis        = 1,
-            specflip        = False,
-            spatflip        = False,
-            platescale      = 0.34, # https://lco.global/observatory/instruments/floyds/
-            darkcurr        = 0.0,  # https://lco.global/observatory/instruments/floyds/
-            saturation      = 38400., # This is in the file headers
-            nonlinear       = 0.989, # Also from the file headers
-            mincounts       = -1e10, # placeholder
-            numamplifiers   = 1,
-            gain            = np.atleast_1d(2.0), # https://lco.global/observatory/instruments/floyds/
-            ronoise         = np.atleast_1d(3.3), # https://lco.global/observatory/instruments/floyds/
-            datasec= np.atleast_1d('[1:512,1:2048]'),  # Taken from file headers
-            oscansec= np.atleast_1d('[1:512,2049:2079]'), # Taken from file headers
-        )
-        return detector_container.DetectorContainer(**detector_dict)
-
-
-
-    @classmethod
-    def default_pypeit_par(cls):
-        """
-        Return the default parameters to use for this instrument.
-
-        Returns:
-            :class:`~pypeit.par.pypeitpar.PypeItPar`: Parameters required by
-            all of ``PypeIt`` methods.
-        """
-        par = super().default_pypeit_par()
-
-        # Turn off bias, illumflat, darks. Turn on overscan
-        turn_off = dict(
-                        #use_pixelflat=True,
-                        #use_illumflat=False,
-                        use_biasimage=False,
-                        use_overscan=True,
-                        use_darkimage=False,
-                        trim=True,
-                        )
-        par.reset_all_processimages_par(**turn_off)
-
-
-        # turn off the fine Correction to the Spatial Illumination
-
         #par['calibrations']['flatfield']['slit_illum_finecorr'] = False
 
+        par['calibrations']["standardframe"]["process"]["use_pixelflat"]= True # This
+        par["scienceframe"]["process"]["use_pixelflat"]= True # This
+        par["scienceframe"]["process"]["use_illumflat"]= False # This won't work for the blue order.
+
         par['calibrations']['flatfield']['tweak_slits'] = False
+        par['calibrations']['flatfield']['pixelflat_min_wave'] = [4540.0,4650.0]
         
         # This works for edge tracing.
         par['calibrations']['slitedges']['edge_thresh'] = 30.0
@@ -481,20 +494,21 @@ class LCOFLOYDSSouthSpectrograph(LCOFLOYDSSpectrograph):
         #par['calibrations']['slitedges']['sobel_mode'] = "constant"
         #par['calibrations']['slitedges']['fit_function'] = "polynomial"
 
-
-        # This works if Echelle == False..
         par['calibrations']['wavelengths']['lamps'] = ["HgAr_LCO"]
-        par['calibrations']['wavelengths']['sigdetect'] = 5.0
+        par['calibrations']['wavelengths']['sigdetect'] = 4.0
         #par['calibrations']['wavelengths']['rms_thresh_frac_fwhm'] = 0.4
         #par['calibrations']['wavelengths']['fwhm'] = 5.0
         par['calibrations']['wavelengths']['func'] = "chebyshev"
         par['calibrations']['wavelengths']['n_first'] = 2  
         par['calibrations']['wavelengths']['n_final'] = [5,3] 
         #par['calibrations']['wavelengths']['nreid_min'] = 1 
+        par['calibrations']['wavelengths']['cc_thresh'] = 0.7 # 0.7 is the default
+
+
         
         par['calibrations']['wavelengths']['reference'] = 'arc'
-        par['calibrations']['wavelengths']['reid_arxiv'] = 'lco_floyds_north.fits'
-        par['calibrations']['wavelengths']['method'] = 'full_template'
+        par['calibrations']['wavelengths']['reid_arxiv'] = 'lco_wvcalib_echelle.fits'
+        par['calibrations']['wavelengths']['method'] = 'reidentify'
         par['calibrations']['wavelengths']['nsnippet'] = 1 # important
         par['calibrations']['wavelengths']['match_toler'] = 5.0
 
@@ -503,20 +517,20 @@ class LCOFLOYDSSouthSpectrograph(LCOFLOYDSSpectrograph):
         #par['calibrations']['wavelengths']['reid_cont_sub'] = False
 
         # Echelle parameters
-        par['calibrations']['wavelengths']['echelle'] = False #True
-        #par['calibrations']['wavelengths']['ech_nspec_coeff'] = 5
-        #par['calibrations']['wavelengths']['ech_norder_coeff'] = 5
-        #par['calibrations']['wavelengths']['ech_sigrej'] = 3.0
-        #par['calibrations']['wavelengths']['ech_2dfit'] = True
-        #par['calibrations']['wavelengths']['ech_sigrej'] = 3.0
-        #par['calibrations']['wavelengths']['bad_orders_maxfrac'] = 0.8
+        par['calibrations']['wavelengths']['echelle'] = True #True
+        par['calibrations']['wavelengths']['ech_nspec_coeff'] = 4
+        par['calibrations']['wavelengths']['ech_norder_coeff'] = 4
+        par['calibrations']['wavelengths']['ech_sigrej'] = 3.0
+        par['calibrations']['wavelengths']['ech_2dfit'] = True
+        par['calibrations']['wavelengths']['ech_sigrej'] = 3.0
+        par['calibrations']['wavelengths']['echelle_pad'] = 1
 
 
         # tilts
         #par['calibrations']['tilts']['spat_order'] =  3
         
         # Flat
-        par['calibrations']['flatfield']['slit_illum_finecorr'] = True # turn off for now
+        par['calibrations']['flatfield']['slit_illum_finecorr'] = False # turn off for now
 
         # skysub
         par['reduce']['skysub']['no_local_sky'] = False
@@ -532,12 +546,13 @@ class LCOFLOYDSSouthSpectrograph(LCOFLOYDSSpectrograph):
         par['reduce']['findobj']['find_fwhm'] = 10        
         par['reduce']['findobj']['maxnumber_sci'] = 1
         par['reduce']['findobj']['maxnumber_std'] = 1
+        par['reduce']['findobj']['trace_npoly'] = 10 # important to trace the bendy trace properly
 
-        par['reduce']['extraction']['use_2dmodel_mask'] = False
+        #par['reduce']['extraction']['use_2dmodel_mask'] = False
 
 
         # Sensitivity function parameters
-        par['sensfunc']['algorithm'] = 'IR'
+        par['sensfunc']['algorithm'] = 'UVIS'
         #par['sensfunc']['polyorder'] = [9, 11, 11, 9, 9, 8, 8, 7, 7, 7, 7, 7, 7, 7, 7]
         #par['sensfunc']['IR']['telgridfile'] = 'TelFit_Paranal_VIS_4900_11100_R25000.fits'
 
@@ -556,9 +571,9 @@ class LCOFLOYDSSouthSpectrograph(LCOFLOYDSSpectrograph):
         Return the expected spatial position of each echelle order.
         """
 
-        return np.array([0.18,0.74])
+        return np.array([0.27,0.74]) 
 
-        #np.array([91.470514, 378.12496]) were the positions used for lco floyds n
+        #np.array([137, 382]) were the positions used for lco floyds n
         # normalised by the detector height
 
     @property

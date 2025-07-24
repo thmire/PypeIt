@@ -725,7 +725,7 @@ class FlatField:
                          [(0.9, 1.1), (0.9, 1.1), None, None, (0.8, 1.2)])
         show_flats(image_list, wcs_match=wcs_match, slits=self.slits, waveimg=self.waveimg)
 
-    def fit(self, spat_illum_only=False, doqa=True, debug=False):
+    def fit(self, spat_illum_only=False, doqa=True, debug=True):
         """
         Construct a model of the flat-field image.
 
@@ -906,6 +906,8 @@ class FlatField:
 
         # #################################################
         # Model each slit independently
+        # TMR: Creating a list to hold the masks produced by the min/max wave flag.
+        slit_masked_pixelflat = []
         for slit_idx, slit_spat in enumerate(self.slits.spat_id):
             # Is this a good slit??
             if self.slits.bitmask.flagged(self.slits.mask[slit_idx], flag=['SHORTSLIT', 'USERIGNORE', 'BADTILTCALIB']):
@@ -1339,12 +1341,29 @@ class FlatField:
 
             # Minimum wavelength?
             if self.flatpar['pixelflat_min_wave'] is not None and self.waveimg is not None:
-                bad_wv = self.waveimg[onslit_tweak] < self.flatpar['pixelflat_min_wave']
-                self.mspixelflat[np.where(onslit_tweak)[0][bad_wv]] = 1.
+                # TMR: Changed the pixel_flat_min_wave to be an array
+                # The min waves are per order, red then blue
+                wave_active_slit_only = np.where(onslit_tweak,self.waveimg,0)
+                bad_wv = wave_active_slit_only > self.flatpar['pixelflat_min_wave'][slit_idx]
+                slit_masked_pixelflat.append(np.where(bad_wv, self.mspixelflat, 1))
+
+                #self.mspixelflat = np.where(bad_wv,self.mspixelflat,1)
+                #bad_wv = self.waveimg[onslit_tweak] < self.flatpar['pixelflat_min_wave']
+                #self.mspixelflat[np.where(onslit_tweak)[0][bad_wv]] = 1.
+                #print("bad_wv:",bad_wv,bad_wv.shape)
+                #print("LOOK HERE:",self.mspixelflat,self.mspixelflat.shape)
+                #print("ONSLIT_TWEAK:",onslit_tweak,onslit_tweak.shape)
+                #print("waveimg:",self.waveimg,self.waveimg.shape)
+                #print("mspixelflat:",self.mspixelflat,self.mspixelflat.shape)
+                
             # Maximum wavelength?
             if self.flatpar['pixelflat_max_wave'] is not None and self.waveimg is not None:
                 bad_wv = self.waveimg[onslit_tweak] > self.flatpar['pixelflat_max_wave']
                 self.mspixelflat[np.where(onslit_tweak)[0][bad_wv]] = 1.
+
+        # Generate the pixel_flat that uses the masks.
+        if slit_masked_pixelflat :
+            self.mspixelflat = np.where(slit_masked_pixelflat[1] == 1, slit_masked_pixelflat[0], slit_masked_pixelflat[1])
 
         # No need to continue if we're just doing the spatial illumination
         if spat_illum_only:
