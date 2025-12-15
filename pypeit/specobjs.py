@@ -24,8 +24,6 @@ from pypeit import io
 from pypeit.spectrographs.util import load_spectrograph
 from pypeit.core import parse
 from pypeit.images.detector_container import DetectorContainer
-# NOTE: Mosaic cannot be found in this module explicitly, but it is used in
-# statements like: dmodcls = eval(hdu.header['DMODCLS'])
 from pypeit.images.mosaic import Mosaic
 from pypeit import utils
 
@@ -105,10 +103,13 @@ class SpecObjs:
                     continue
                 if 'DMODCLS' not in hdu.header:
                     msgs.error('HDUs with DETECTOR in the name must have DMODCLS in their header.')
-                try:
-                    dmodcls = eval(hdu.header['DMODCLS'])
-                except:
-                    msgs.error(f"Unknown detector type datamodel class: {hdu.header['DMODCLS']}")
+                match hdu.header['DMODCLS']:
+                    case 'DetectorContainer':
+                        dmodcls = DetectorContainer
+                    case 'Mosaic':
+                        dmodcls = Mosaic
+                    case _:
+                        msgs.error(f"Unknown detector datamodel class: {hdu.header['DMODCLS']}")
                 # NOTE: This requires that any "detector" datamodel class has a
                 # from_hdu method, and the name of the HDU must have a known format
                 # (e.g., 'DET01-DETECTOR').
@@ -633,15 +634,16 @@ class SpecObjs:
         #  (not recommnneded but useful for quick reductions where you don't want to construct cubes and don't care about DAR).
         if spectrograph.pypeline in ['MultiSlit','SlicerIFU']:
             for ii, sci_obj in enumerate(self.specobjs):
+                # PYP_SPEC is needed for each specobj
+                if sci_obj.PYP_SPEC is None:
+                    sci_obj.PYP_SPEC = spectrograph.name
                 if sens.wave.shape[1] == 1:
                     tellmodel = sens.telluric.model['TELLURIC'][0, :] if tell else None
                     sci_obj.apply_flux_calib(sens.wave[:, 0], sens.zeropoint[:, 0],
                                              self.header['EXPTIME'],
                                              extinct_correct=_extinct_correct,
                                              tellmodel=tellmodel,
-                                             longitude=spectrograph.telescope['longitude'],
-                                             latitude=spectrograph.telescope['latitude'],
-                                             extinctfilepar=par['extinct_file'],
+                                             extinct_file=par['extinct_file'],
                                              extrap_sens=par['extrap_sens'],
                                              airmass=float(self.header['AIRMASS']))
                 elif sens.wave.shape[1] > 1 and sens.splice_multi_det:
@@ -653,9 +655,7 @@ class SpecObjs:
                                              self.header['EXPTIME'],
                                              extinct_correct=_extinct_correct,
                                              tellmodel=tellmodel,
-                                             longitude=spectrograph.telescope['longitude'],
-                                             latitude=spectrograph.telescope['latitude'],
-                                             extinctfilepar=par['extinct_file'],
+                                             extinct_file=par['extinct_file'],
                                              extrap_sens=par['extrap_sens'],
                                              airmass=float(self.header['AIRMASS']))
                 else:
@@ -669,6 +669,9 @@ class SpecObjs:
             # i.e. X-shooter with the K-band blocking filter.
             ech_orders = np.array(sens.sens['ECH_ORDERS']).flatten()
             for sci_obj in self.specobjs:
+                # PYP_SPEC is needed for each specobj
+                if sci_obj.PYP_SPEC is None:
+                    sci_obj.PYP_SPEC = spectrograph.name
                 # JFH Is there a more elegant pythonic way to do this without looping over both orders and sci_obj?
                 indx = np.where(ech_orders == sci_obj.ECH_ORDER)[0]
                 if indx.size == 1:
@@ -678,9 +681,7 @@ class SpecObjs:
                                              extinct_correct=_extinct_correct,
                                              tellmodel=tellmodel,
                                              extrap_sens=par['extrap_sens'],
-                                             longitude=spectrograph.telescope['longitude'],
-                                             latitude=spectrograph.telescope['latitude'],
-                                             extinctfilepar=par['extinct_file'],
+                                             extinct_file=par['extinct_file'],
                                              airmass=float(self.header['AIRMASS']))
                 elif indx.size == 0:
                     msgs.info('Unable to flux calibrate order = {:} as it is not in your sensitivity function. '

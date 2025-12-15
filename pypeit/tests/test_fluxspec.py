@@ -9,7 +9,6 @@ import pytest
 from IPython import embed
 
 import numpy as np
-import configobj
 
 from astropy.table import Table
 from astropy.io import fits
@@ -19,14 +18,13 @@ from pypeit import fluxcalibrate
 from pypeit import sensfunc
 from pypeit.par import pypeitpar
 from pypeit.tests.tstutils import data_output_path
-from pypeit.spectrographs.util import load_spectrograph
-from pypeit.spectrographs import keck_deimos
 from pypeit import specobjs, specobj
 from pypeit import inputfiles 
 
 from pypeit import fluxcalibrate
 from pypeit.pypmsgs import PypeItError
 from pypeit import scripts
+
 
 def test_input_flux_file():
     """Tests for generating and reading fluxing input files
@@ -185,7 +183,7 @@ def extinction_correction_tester(algorithm):
     sobj = specobj.SpecObj.from_arrays('MultiSlit', wave, counts, ivar, flat)
     sobjs = specobjs.SpecObjs([sobj])
 
-    # choice of PYP_SPEC, DISPNAME and EXPTIME are unimportant here
+    # choice of DISPNAME and EXPTIME are unimportant here
     # AIRMASS must be > 1
     sobjs.write_to_fits({
         'PYP_SPEC': 'p200_dbsp_blue',
@@ -229,5 +227,3 @@ def extinction_correction_tester(algorithm):
     # clean up
     os.remove(spec1d_file)
     os.remove(sens_file)
-
-

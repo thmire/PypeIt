@@ -684,6 +684,8 @@ The script usage can be displayed by calling the script with the
 
 .. include:: help/pypeit_show_1dspec.rst
 
+.. _pypeit_chk_noise_1dspec:
+
 pypeit_chk_noise_1dspec
 -----------------------
 
@@ -701,6 +703,23 @@ Here is an example from the Dev Suite:
 .. code-block:: console
 
     pypeit_chk_noise_1dspec Science/spec1d_d0225_0054-16045h_DEIMOS_20190225T145727.158.fits
+
+.. _pypeit_rectify_2dspec:
+
+pypeit_rectify_2dspec
+---------------------
+
+This script creates a rectified 2D spectral image. Each slit/order in the
+spec2d output file is rectified onto a common wavelength grid. This rectified 2D
+image must be used only for quick-look visualization purposes, and not for
+scientific analysis. This image can be easily visualized using `ginga`_ (soon!) or
+`ds9`_.
+
+The script usage can be displayed by calling the script with the
+``-h`` option:
+
+.. include:: help/pypeit_rectify_2dspec.rst
+
 
 ----
 
