@@ -247,11 +247,11 @@ class LCOFLOYDSNorthSpectrograph(LCOFLOYDSSpectrograph):
         par['calibrations']['wavelengths']["fwhm_fromlines"] = True
         par['calibrations']['wavelengths']['func'] = "chebyshev"
         par['calibrations']['wavelengths']['n_first'] = 2 
-        par['calibrations']['wavelengths']['n_final'] = [4,4] 
+        par['calibrations']['wavelengths']['n_final'] = [6,4] 
         #par['calibrations']['wavelengths']['nreid_min'] = 1 
         
         par['calibrations']['wavelengths']['reference'] = 'arc'
-        par['calibrations']['wavelengths']['reid_arxiv'] = 'lco_wvcalib_echelle.fits'
+        par['calibrations']['wavelengths']['reid_arxiv'] = 'lco_wvcalib_echelle_north_20240701.fits'
         par['calibrations']['wavelengths']['method'] = 'reidentify'
         par['calibrations']['wavelengths']['nsnippet'] = 1 # important
         par['calibrations']['wavelengths']['match_toler'] = 5.0
@@ -262,7 +262,7 @@ class LCOFLOYDSNorthSpectrograph(LCOFLOYDSSpectrograph):
 
         # Echelle parameters
         par['calibrations']['wavelengths']['echelle'] = True
-        par['calibrations']['wavelengths']['ech_nspec_coeff'] = 4
+        par['calibrations']['wavelengths']['ech_nspec_coeff'] = 5
         par['calibrations']['wavelengths']['ech_norder_coeff'] = 4
         par['calibrations']['wavelengths']['ech_sigrej'] = 3.0
         par['calibrations']['wavelengths']['ech_2dfit'] = True
@@ -500,14 +500,14 @@ class LCOFLOYDSSouthSpectrograph(LCOFLOYDSSpectrograph):
         #par['calibrations']['wavelengths']['fwhm'] = 5.0
         par['calibrations']['wavelengths']['func'] = "chebyshev"
         par['calibrations']['wavelengths']['n_first'] = 2  
-        par['calibrations']['wavelengths']['n_final'] = [5,3] 
+        par['calibrations']['wavelengths']['n_final'] = [4,4] 
         #par['calibrations']['wavelengths']['nreid_min'] = 1 
         par['calibrations']['wavelengths']['cc_thresh'] = 0.7 # 0.7 is the default
 
 
         
         par['calibrations']['wavelengths']['reference'] = 'arc'
-        par['calibrations']['wavelengths']['reid_arxiv'] = 'lco_wvcalib_echelle.fits'
+        par['calibrations']['wavelengths']['reid_arxiv'] = 'lco_wvcalib_echelle_south_20240109.fits'
         par['calibrations']['wavelengths']['method'] = 'reidentify'
         par['calibrations']['wavelengths']['nsnippet'] = 1 # important
         par['calibrations']['wavelengths']['match_toler'] = 5.0
@@ -517,12 +517,11 @@ class LCOFLOYDSSouthSpectrograph(LCOFLOYDSSpectrograph):
         #par['calibrations']['wavelengths']['reid_cont_sub'] = False
 
         # Echelle parameters
-        par['calibrations']['wavelengths']['echelle'] = True #True
-        par['calibrations']['wavelengths']['ech_nspec_coeff'] = 4
+        par['calibrations']['wavelengths']['echelle'] = True 
+        par['calibrations']['wavelengths']['ech_nspec_coeff'] = 5
         par['calibrations']['wavelengths']['ech_norder_coeff'] = 4
         par['calibrations']['wavelengths']['ech_sigrej'] = 3.0
         par['calibrations']['wavelengths']['ech_2dfit'] = True
-        par['calibrations']['wavelengths']['ech_sigrej'] = 3.0
         par['calibrations']['wavelengths']['echelle_pad'] = 1
 
 
