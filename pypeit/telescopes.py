@@ -43,6 +43,17 @@ class KeckTelescopePar(TelescopePar):
                                                diameter=10,
                                                eff_aperture=72.3674)
 
+class SubaruTelescopePar(TelescopePar):
+    def __init__(self):
+        loc = EarthLocation.of_site('Subaru Telescope')
+        super(SubaruTelescopePar, self).__init__(name='SUBARU',
+                                               longitude=loc.lon.to(units.deg).value,
+                                               latitude=loc.lat.to(units.deg).value,
+                                               elevation=loc.height.to(units.m).value,
+                                               fratio=12.2,  # CASSEGRAIN
+                                               diameter=8.2,
+                                               eff_aperture=52.3782)  # This number is somewhat uncertain..
+
 
 class MagellanTelescopePar(TelescopePar):
     def __init__(self):
@@ -63,7 +74,7 @@ class ShaneTelescopePar(TelescopePar):
                                                 diameter=3.05,
                                                 eff_aperture=6.3617)
 
-                                
+
 class WHTTelescopePar(TelescopePar):
     def __init__(self):
         loc = EarthLocation.of_site('Roque de los Muchachos')
@@ -72,7 +83,7 @@ class WHTTelescopePar(TelescopePar):
                                               latitude=loc.lat.to(units.deg).value,
                                               elevation=loc.height.to(units.m).value,
                                               diameter=4.2)
-                                
+
 class APFTelescopePar(TelescopePar):
     def __init__(self):
         loc = EarthLocation.of_site('Lick Observatory')
@@ -81,7 +92,7 @@ class APFTelescopePar(TelescopePar):
                                               latitude=loc.lat.to(units.deg).value,
                                               elevation=loc.height.to(units.m).value,
                                               diameter=2.4)
-                                
+
 class TNGTelescopePar(TelescopePar):
     def __init__(self):
         loc = EarthLocation.of_site('Roque de los Muchachos')
@@ -158,13 +169,13 @@ class KPNOTelescopePar(TelescopePar):
                                                eff_aperture=11.2)
 # KPNO from https://en.wikipedia.org/wiki/Nicholas_U._Mayall_Telescope
 
-class HiltnerTelescopePar(TelescopePar): 
+class HiltnerTelescopePar(TelescopePar):
     def __init__(self):
-        loc = EarthLocation.of_site('mdm') 
-        super(HiltnerTelescopePar, self).__init__(name='HILTNER', 
-                                           longitude=loc.lon.to(units.deg).value, 
-                                           latitude=loc.lat.to(units.deg).value, 
-                                           elevation=loc.height.to(units.m).value, 
+        loc = EarthLocation.of_site('mdm')
+        super(HiltnerTelescopePar, self).__init__(name='HILTNER',
+                                           longitude=loc.lon.to(units.deg).value,
+                                           latitude=loc.lat.to(units.deg).value,
+                                           elevation=loc.height.to(units.m).value,
                                            diameter=2.4)
 # See https://noirlab.edu/public/programs/kitt-peak-national-observatory/the-hiltner-24m-telescope/
 

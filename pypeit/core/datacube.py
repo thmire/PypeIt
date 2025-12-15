@@ -190,7 +190,8 @@ def correct_grating_shift(wave_eval, wave_curr, spl_curr, wave_ref, spl_ref, ord
 
 
 def extract_point_source(wave, flxcube, ivarcube, bpmcube, wcscube, exptime,
-                         subpixel=20, boxcar_radius=None, optfwhm=None, whitelight_range=None,
+                         subpixel=20, boxcar_radius=None, optfwhm=None,
+                         min_frac_use=0.05, whitelight_range=None,
                          pypeline="SlicerIFU", fluxed=False):
     """
     Extract a spectrum of a standard star from a datacube
@@ -216,6 +217,11 @@ def extract_point_source(wave, flxcube, ivarcube, bpmcube, wcscube, exptime,
     optfwhm : float, optional
         FWHM of the PSF in pixels that is used to generate a Gaussian profile
         for the optimal extraction.
+    min_frac_use : float, optional
+        Minimum accepted value for the sum of the normalized object profile across the spatial direction.
+        For each spectral pixel, if the majority of the object profile has been masked, i.e.,
+        the sum of the normalized object profile across the spatial direction is less than `min_frac_use`,
+        the optimal extraction will also be masked. The default value is 0.05.
     pypeline : str, optional
         PypeIt pipeline used to reduce the datacube
     fluxed : bool, optional
@@ -238,8 +244,8 @@ def extract_point_source(wave, flxcube, ivarcube, bpmcube, wcscube, exptime,
 
     # Convert from counts/s/Ang/arcsec**2 to counts. The sensitivity function expects counts as input
     numxx, numyy, numwave = flxcube.shape
-    arcsecSQ = (wcscube.wcs.cdelt[0] * wcscube.wcs.cunit[0].to(units.arcsec)) * \
-               (wcscube.wcs.cdelt[1] * wcscube.wcs.cunit[1].to(units.arcsec))
+    arcsecSQ = abs((wcscube.wcs.cdelt[0] * wcscube.wcs.cunit[0].to(units.arcsec)) * \
+               (wcscube.wcs.cdelt[1] * wcscube.wcs.cunit[1].to(units.arcsec)))
     if fluxed:
         # The datacube is flux calibrated, in units of 10^-17 erg/s/cm**2/Ang/arcsec**2
         # Scale the flux and ivar cubes to be in units of erg/s/cm**2/Ang
@@ -321,7 +327,7 @@ def extract_point_source(wave, flxcube, ivarcube, bpmcube, wcscube, exptime,
     box_gpm = flxscl > 1/3  # Good pixels are those where at least one-third of the standard star flux is measured
 
     # Store the BOXCAR extraction information
-    sobj.BOX_RADIUS = wid  # Size of boxcar radius in pixels
+    sobj.BOX_R_PIX = wid  # Size of boxcar radius in pixels
     sobj.BOX_WAVE = wave.astype(float)
     if fluxed:
         sobj.BOX_FLAM = box_flux
@@ -389,7 +395,7 @@ def extract_point_source(wave, flxcube, ivarcube, bpmcube, wcscube, exptime,
 
     # Now do the optimal extraction
     extract.extract_optimal(flxcube2d, ivarcube2d, gpmcube2d, waveimg, skyimg, thismask, oprof,
-                            sobj, min_frac_use=0.05, fwhmimg=None, base_var=None, count_scale=None, noise_floor=None)
+                            sobj, min_frac_use=min_frac_use, fwhmimg=None, base_var=None, count_scale=None, noise_floor=None)
 
     # TODO :: The optimal extraction may suffer from residual DAR correction issues. This is because the
     #      :: object profile assumes that the white light image represents the true spatial profile of the
@@ -1320,8 +1326,12 @@ def compute_weights(raImg, decImg, waveImg, sciImg, ivarImg, slitidImg,
     spec_bins = np.arange(1 + numwav) - 0.5
     bins = (xbins, ybins, spec_bins)
 
+    # Grab cos(dec) for convenience. Use the average of the min and max dec.
+    cosdec = np.cos(0.5 * (_dec_min + _dec_max) * np.pi / 180.0)
+    # Number of spaxels in the RA direction
+    numra = int((_ra_max - _ra_min) * cosdec / dspat)
+
     # Generate a 2D WCS to register all frames
-    numra = xbins.size - 1
     coord_min = [_ra_min, _dec_min, _wave_min]
     coord_dlt = [-dspat, dspat, dwv]
     whitelightWCS = generate_WCS(coord_min, coord_dlt, numra)
@@ -1357,7 +1367,7 @@ def compute_weights(raImg, decImg, waveImg, sciImg, ivarImg, slitidImg,
                                        sn_smooth_npix=sn_smooth_npix, weight_method=weight_method)
 
     # Because we pass back a weights array, we need to interpolate to assign each detector pixel a weight
-    all_wghts = [np.ones(_sciImg[0].shape) for _ in range(numframes)]
+    all_wghts = numframes*[np.ones(_sciImg[0].shape)]
     for ff in range(numframes):
         ww = (slitidImg[ff] > 0)
         all_wghts[ff][ww] = interp1d(wave_spec, weights[ff], kind='cubic',
@@ -1818,7 +1828,7 @@ def subpixellate(output_wcs, bins, sciImg, ivarImg, waveImg, slitid_img_gpm, wgh
             vox_coord = vox_coord.reshape(numpix * num_all_subpixels, 3)
             # Use the "fast histogram" algorithm, that assumes regular bin spacing
             flxcube += histogramdd(vox_coord, bins=outshape, range=binrng, weights=np.repeat(this_sci[this_sl] * this_wght_subpix[this_sl], num_all_subpixels) * subpix_wght)
-            varcube += histogramdd(vox_coord, bins=outshape, range=binrng, weights=np.repeat(this_var[this_sl] * this_wght_subpix[this_sl]**2, num_all_subpixels) * subpix_wght**3)
+            varcube += histogramdd(vox_coord, bins=outshape, range=binrng, weights=np.repeat(this_var[this_sl] * this_wght_subpix[this_sl]**2, num_all_subpixels) * subpix_wght**2)  # NOTE :: This was changed from subpix_wght**3 to subpix_wght**2 by RJC on 2024-12-18
             normcube += histogramdd(vox_coord, bins=outshape, range=binrng, weights=np.repeat(this_wght_subpix[this_sl], num_all_subpixels) * subpix_wght)
 
     # Normalise the datacube and variance cube
